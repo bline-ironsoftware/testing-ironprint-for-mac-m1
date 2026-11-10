@@ -9,8 +9,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <!-- Keep in sync with ConsoleTest.csproj and MauiTest.csproj -->
-    <IronPrintTestVersion Condition="'$(IronPrintTestVersion)' == ''">2026.11.2-prerelease</IronPrintTestVersion>
+    <IronPrintTestVersion Condition="'$(IronPrintTestVersion)' == ''">2026.11.1</IronPrintTestVersion>
   </PropertyGroup>
 
   <ItemGroup>

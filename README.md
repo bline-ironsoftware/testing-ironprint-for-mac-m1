@@ -1,17 +1,30 @@
 # ironprint-net11-mac
 
-Checks IronPrint 2026.11.2-prerelease compatibility with .NET 11 RC3 SDK
+Checks IronPrint 2026.11.1 compatibility with .NET 11 RC3 SDK
 (`11.0.100-rc.3.26522.148`, pinned in `global.json`) on macOS and MAUI
 (MacCatalyst / iOS / Android). Windows was already covered separately.
 
 ## Known constraints (read before running)
 
-- **Version**: the spec that produced this repo named "IronPrint 2026.11.1",
-  but only `2026.11.2-prerelease` was resolvable from the feed/local NuGet
-  cache at the time this was built. All three projects pin
-  `IronPrintTestVersion` to `2026.11.2-prerelease` (set as an MSBuild property
-  in each `.csproj`) -- override it with `-p:IronPrintTestVersion=2026.11.1`
-  if that version turns out to be available and you want to test it instead.
+- **Version**: all three projects pin `IronPrintTestVersion` to `2026.11.1`
+  (an MSBuild property in `IronPrintTest.Shared.csproj`, consumed by both
+  `ConsoleTest` and `MauiTest` via `ProjectReference`) -- override with
+  `-p:IronPrintTestVersion=<other version>` if you need to test a different
+  one. Note: as of this writing, the published `2026.11.1` package ships
+  `net8.0` / `net8.0-maccatalyst11.0` / `net8.0-ios10.0` / `net8.0-android21` /
+  `net8.0-macos10.14` / `net8.0-windows7.0` assets (no `net11.0`-specific
+  build yet) -- NuGet's standard same-family roll-down resolves these fine
+  under our `net11.0`/`net11.0-maccatalyst`/etc. TargetFrameworks.
+- **Printing requires an OS-specific TargetFramework outside Windows.**
+  `ConsoleTest` targets plain `net11.0` (no OS suffix), and on Windows that's
+  fine -- but on macOS, IronPrint falls back to `System.Drawing.Printing`,
+  which has no real printing backend in .NET's cross-platform build (not even
+  with `libgdiplus` installed). Every scenario on `ConsoleTest` run from
+  macOS will report `FAIL` with a `PlatformNotSupportedException` telling you
+  to use a TFM like `net7.0-macos`/`net7.0-maccatalyst`/`net7.0-android` --
+  this is IronPrint's own documented limitation, not a bug in this harness.
+  The real Mac print-path test is `MauiTest` on `net11.0-maccatalyst`, which
+  **is** one of those supported OS-specific TFMs.
 - **`Printer.GetPrinterNamesAsync()` / `GetPrinterNames()` do not exist at all**
   in the MacCatalyst, iOS, or Android builds of IronPrint (confirmed by
   inspecting the installed package's `IronPrint.xml`/`IronPrint.dll` per
