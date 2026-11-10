@@ -25,6 +25,17 @@ Checks IronPrint 2026.11.1 compatibility with .NET 11 RC3 SDK
   this is IronPrint's own documented limitation, not a bug in this harness.
   The real Mac print-path test is `MauiTest` on `net11.0-maccatalyst`, which
   **is** one of those supported OS-specific TFMs.
+- **MacCatalyst/iOS builds on this SDK need Xcode 27.0, not just any Xcode.**
+  The `net11.0-maccatalyst`/`net11.0-ios` workload packs bundled with
+  `11.0.100-rc.3.26522.148` are versioned `...net11.0_27.0`, and MSBuild
+  hard-fails before compiling anything if `xcodebuild -version` reports an
+  older Xcode (confirmed on a real Mac mini: Xcode 26.1.1 installed ->
+  immediate `error : This version of .NET for MacCatalyst ... requires
+  Xcode 27.0`). Update Xcode via the App Store (or
+  https://developer.apple.com/download/all/) to 27.x, then
+  `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer` and
+  `sudo xcodebuild -license accept` again, before attempting MacCatalyst or
+  iOS. Android is unaffected -- it has no Xcode dependency.
 - **`Printer.GetPrinterNamesAsync()` / `GetPrinterNames()` do not exist at all**
   in the MacCatalyst, iOS, or Android builds of IronPrint (confirmed by
   inspecting the installed package's `IronPrint.xml`/`IronPrint.dll` per
@@ -68,6 +79,10 @@ lpstat -p
 
 `lpstat -p` lists configured printers (CUPS) -- confirms there's at least one
 printer (real or `ippeveprinter`, see below) before you start.
+
+**`xcodebuild -version` must report Xcode 27.0 or newer** for the MacCatalyst
+and iOS targets to build at all on this SDK -- see the Known Constraints
+section below if it doesn't.
 
 ### 2. Install the .NET 11 RC3 SDK + MAUI workload
 
