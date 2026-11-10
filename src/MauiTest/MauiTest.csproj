@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net11.0-maccatalyst;net11.0-ios;net11.0-android</TargetFrameworks>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>MauiTest</RootNamespace>
+    <UseMaui>true</UseMaui>
+    <SingleProject>true</SingleProject>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <ApplicationTitle>IronPrint .NET 11 Test</ApplicationTitle>
+    <ApplicationId>com.ironsoftware.ironprinttest</ApplicationId>
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <ApplicationVersion>1</ApplicationVersion>
+
+    <SupportedOSPlatformVersion Condition="'$(TargetFramework)' == 'net11.0-ios'">15.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion Condition="'$(TargetFramework)' == 'net11.0-maccatalyst'">15.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion Condition="'$(TargetFramework)' == 'net11.0-android'">21.0</SupportedOSPlatformVersion>
+    <TargetPlatformMinVersion Condition="'$(TargetFramework)' == 'net11.0-android'">21.0</TargetPlatformMinVersion>
+
+    <CodesignEntitlements Condition="'$(TargetFramework)' == 'net11.0-maccatalyst'">Platforms\MacCatalyst\Entitlements.plist</CodesignEntitlements>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- App Icon -->
+    <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#2B2E83" />
+
+    <!-- Splash Screen -->
+    <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#2B2E83" BaseSize="128,128" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Bundled under the logical path "TestFiles/..." so FileSystem.OpenAppPackageFileAsync("TestFiles/sample.pdf")
+         resolves the same way on MacCatalyst, iOS and Android. -->
+    <MauiAsset Include="..\..\TestFiles\sample.pdf" LogicalName="TestFiles/sample.pdf" />
+    <MauiAsset Include="..\..\TestFiles\sample.jpg" LogicalName="TestFiles/sample.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\IronPrintTest.Shared\IronPrintTest.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

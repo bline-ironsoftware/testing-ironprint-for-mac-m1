@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MauiTest.MainPage"
+             Title="IronPrint .NET 11 Test">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="8">
+
+            <Label Text="IronPrint .NET 11 compatibility test" FontSize="20" FontAttributes="Bold" />
+            <Label x:Name="PlatformLabel" Text="Starting..." FontSize="12" TextColor="Gray" />
+
+            <Label Text="Printer name (blank = OS default; GetPrinterNamesAsync is not available on this platform's IronPrint build, see S1):"
+                   FontSize="12" Margin="0,10,0,0" />
+            <Entry x:Name="PrinterNameEntry" Placeholder="e.g. Office HP LaserJet" />
+
+            <BoxView HeightRequest="1" BackgroundColor="LightGray" Margin="0,10" />
+
+            <Button Text="S1 - GetPrinterNamesAsync: list the printers" CommandParameter="S1" Clicked="OnScenarioClicked" />
+            <Button Text="S2 - PrintAsync with a PDF file path" CommandParameter="S2" Clicked="OnScenarioClicked" />
+            <Button Text="S3 - PrintAsync with the PDF as byte[]" CommandParameter="S3" Clicked="OnScenarioClicked" />
+            <Button Text="S4 - PrintAsync with a JPG file path" CommandParameter="S4" Clicked="OnScenarioClicked" />
+            <Button Text="S5 - Grayscale = true" CommandParameter="S5" Clicked="OnScenarioClicked" />
+            <Button Text="S6 - 2 copies" CommandParameter="S6" Clicked="OnScenarioClicked" />
+            <Button Text="S7 - Landscape orientation" CommandParameter="S7" Clicked="OnScenarioClicked" />
+
+            <BoxView HeightRequest="1" BackgroundColor="LightGray" Margin="0,10" />
+
+            <Label Text="Log" FontAttributes="Bold" />
+            <Editor x:Name="LogEditor" IsReadOnly="True" AutoSize="TextChanges" MinimumHeightRequest="200"
+                    BackgroundColor="White" FontFamily="Courier" FontSize="12" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

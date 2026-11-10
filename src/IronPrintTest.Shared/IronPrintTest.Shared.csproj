@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net11.0;net11.0-maccatalyst;net11.0-ios;net11.0-android</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseMaui>true</UseMaui>
+    <SingleProject>true</SingleProject>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Keep in sync with ConsoleTest.csproj and MauiTest.csproj -->
+    <IronPrintTestVersion Condition="'$(IronPrintTestVersion)' == ''">2026.11.2-prerelease</IronPrintTestVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="IronPrint" Version="$(IronPrintTestVersion)" />
+  </ItemGroup>
+
+</Project>
