@@ -22,11 +22,18 @@
        and a netstandard2.0 fallback with no native platform binding), so MacCatalyst (and the
        native macos console target) stay on the plain IronPrint package, which has genuine native
        net8.0-maccatalyst11.0 and net8.0-macos10.14 builds. -->
+  <!-- On net11.0-ios NuGet resolves IronPrint.Xamarin to lib/netstandard2.0 (not xamarin.ios10),
+       and every PrintAsync call then throws NotImplementedException. iOS therefore defaults to
+       the plain IronPrint package (lib/net8.0-ios10.0). Build with -p:IosUseXamarin=true to
+       reproduce the IronPrint.Xamarin result. -->
+  <PropertyGroup>
+    <IosUseXamarin Condition="'$(IosUseXamarin)' == ''">false</IosUseXamarin>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="IronPrint" Version="$(IronPrintTestVersion)"
-                       Condition="'$(TargetFramework)' == 'net11.0' or '$(TargetFramework)' == 'net11.0-macos' or '$(TargetFramework)' == 'net11.0-maccatalyst'" />
+                       Condition="'$(TargetFramework)' == 'net11.0' or '$(TargetFramework)' == 'net11.0-macos' or '$(TargetFramework)' == 'net11.0-maccatalyst' or ('$(TargetFramework)' == 'net11.0-ios' and '$(IosUseXamarin)' != 'true')" />
     <PackageReference Include="IronPrint.Xamarin" Version="$(IronPrintXamarinTestVersion)"
-                       Condition="'$(TargetFramework)' == 'net11.0-ios' or '$(TargetFramework)' == 'net11.0-android'" />
+                       Condition="'$(TargetFramework)' == 'net11.0-android' or ('$(TargetFramework)' == 'net11.0-ios' and '$(IosUseXamarin)' == 'true')" />
   </ItemGroup>
 
 </Project>
