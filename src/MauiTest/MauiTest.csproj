@@ -22,8 +22,8 @@
     <CodesignEntitlements Condition="'$(TargetFramework)' == 'net11.0-maccatalyst'">Platforms\MacCatalyst\Entitlements.plist</CodesignEntitlements>
 
     <!-- .NET 11 RC3's MacCatalyst/iOS workload packs pin exactly Xcode 27.0; we have 27.1.
-         Per https://aka.ms/xcode-requirement this is an untested-but-often-fine combination,
-         not a hard technical requirement -- skip the check rather than installing an older Xcode. -->
+         Per https://aka.ms/xcode-requirement this is an untested but often-fine combination,
+         not a hard technical requirement, so skip the check rather than installing an older Xcode. -->
     <ValidateXcodeVersion Condition="'$(TargetFramework)' == 'net11.0-maccatalyst' or '$(TargetFramework)' == 'net11.0-ios'">false</ValidateXcodeVersion>
   </PropertyGroup>
 
