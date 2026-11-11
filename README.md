@@ -77,6 +77,22 @@ Checks IronPrint 2026.11.1 compatibility with .NET 11 RC3 SDK
   appear as a literal string in IronPrint's own assemblies or its key
   dependencies) -- a confirmed, unresolved Android blocker worth reporting to
   IronSoftware, not something fixable from this repo.
+- **`net11.0-macos` also fails to build -- confirmed, different root cause
+  than MacCatalyst, also not fixable from this repo.** `clang++` fails
+  linking with `Undefined symbols for architecture arm64: "_C_CancelFunction"`,
+  `"_C_CloseSession"`, etc. -- the native PKCS#11 (smart-card/HSM) symbols
+  that `Pkcs11Interop` (one of IronPrint's own dependencies, used for license
+  activation against hardware security tokens) expects to resolve at build
+  time. `UseInterpreter=true` (the standard .NET for Mac/iOS workaround for
+  dependencies that can't be fully AOT-linked) was tried and confirmed to
+  have **no effect** -- identical error either way, since this is the final
+  native-to-native link step that bundles every referenced native library
+  into one Mach-O executable, which happens regardless of managed IL
+  execution mode. So: **neither native macOS nor MacCatalyst currently
+  builds at all with IronPrint 2026.11.1 on .NET 11 RC3**, for two distinct,
+  unrelated reasons (missing native asset vs. an unresolvable third-party
+  native dependency) -- both worth reporting to IronSoftware as separate
+  issues.
 
 ## Repo layout
 
@@ -227,7 +243,7 @@ checked the physical output of S2-S7:
 | Platform | Build | Printer list (S1) | PDF path (S2) | PDF bytes (S3) | JPG (S4) | Grayscale (S5) | 2 copies (S6) | Landscape (S7) |
 |----------|-------|--------------------|----------------|-----------------|----------|-----------------|----------------|-----------------|
 | Console (macOS, generic net11.0) | n/a | FAIL (confirmed) | FAIL (confirmed) | FAIL (confirmed) | FAIL (confirmed) | FAIL (confirmed) | FAIL (confirmed) | FAIL (confirmed) |
-| Native macOS console (net11.0-macos) | | | | | | | | |
+| Native macOS console (net11.0-macos) | FAIL (confirmed -- Pkcs11Interop native link error, see Known Constraints) | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
 | Mac Catalyst | FAIL (confirmed -- missing native asset, see Known Constraints) | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
 | iOS simulator | | | | | | | | |
 | Android emulator | n/a | FAIL (confirmed) | FAIL (confirmed -- Resource not found: 0) | n/a | FAIL (confirmed -- same error) | n/a | n/a | n/a |
