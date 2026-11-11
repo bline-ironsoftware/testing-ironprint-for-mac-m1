@@ -2,9 +2,10 @@
 
 Four confirmed, reproducible issues found while testing whether IronPrint
 2026.11.1 works with .NET 11 RC3 (`11.0.100-rc.3.26522.148`) on macOS
-(native, Mac Catalyst) and mobile (Android, iOS). Three belong to
-IronSoftware (IronPrint itself); one belongs to Microsoft (.NET
-MAUI/Microsoft.iOS). Full repro repo:
+(native, Mac Catalyst) and mobile (Android, iOS). All four belong to
+IronSoftware (IronPrint itself). An earlier draft attributed the iOS
+problem to .NET MAUI; that was wrong, see the note at the end of section 4.
+Full repro repo:
 https://github.com/bline-ironsoftware/testing-ironprint-for-mac-m1
 
 ---
@@ -139,54 +140,55 @@ IronPrint version, for both PDF and image input.
 
 ---
 
-## 4. Not IronSoftware -- Microsoft .NET MAUI / Microsoft.iOS: iOS app never renders any UI
+## 4. IronSoftware -- iOS: cannot build for the simulator (plain IronPrint); `IronPrint.Xamarin` throws `NotImplementedException`
 
-**This one is for Microsoft/the dotnet team, not IronSoftware** -- it
-blocks testing IronPrint on iOS at all, but has nothing to do with
-IronPrint itself.
-
+**Packages:** IronPrint 2026.11.1 and IronPrint.Xamarin 2026.11.1
+**Target:** `net11.0-ios`, iOS 27.0 simulator (iPad), Apple Silicon Mac
 **Environment:** .NET 11 RC3 SDK, `Microsoft.Maui.Sdk` `11.0.0-rc.2.26505.5`,
-iOS Simulator runtime 27.0/27.1, iPhone 15/18 Pro/Duo simulators all tested
+`Microsoft.iOS.Sdk.net11.0_27.0` `27.0.12212-net11-rc.2`
 
-**Step 1 -- app fails to launch at all without a scene manifest:**
+**4a. Plain IronPrint, `iossimulator-arm64` (default on Apple Silicon):**
 ```
-Error (UIKitCore) Application failed to launch: UIScene life cycle is
-required for apps built with this SDK. See "Transitioning to the UIKit
-scene-based life cycle" in the UIKit documentation for more information
-on migration.
+ld: building for 'iOS-simulator', but linking in dylib
+(.../nativelibraries/IronPrintInterop.dylib) built for 'iOS'
 ```
-confirmed via the simulator's unified system log
-(`xcrun simctl spawn <udid> log show --predicate 'process == "MauiTest"'`).
-This iOS SDK apparently now mandates the UIKit scene-based app lifecycle;
-the default MAUI iOS project scaffold's `Info.plist` has no
-`UIApplicationSceneManifest` entry at all.
+The package ships `ios-arm64` and `iossimulator-x64` native assets but no
+`iossimulator-arm64`, so the device-built dylib is selected and the linker
+rejects it. Same class of gap as section 1.
 
-**Step 2 -- after adding the minimal scene manifest, the app launches
-cleanly but renders nothing:**
-```xml
-<key>UIApplicationSceneManifest</key>
-<dict>
-    <key>UIApplicationSupportsMultipleScenes</key>
-    <false/>
-</dict>
+**4b. Plain IronPrint, `-r iossimulator-x64`:**
 ```
-With this added, the app launches with **zero errors or exceptions** --
-confirmed via `xcrun simctl launch --console <udid> <bundle-id>`, which
-showed only two unrelated, harmless warnings (an IDE debugger socket
-connection refusal, and a background-fetch `Info.plist` note) -- but the
-screen stays permanently black. No MAUI content (labels, buttons, the
-app's own log view) ever appears, confirmed via `simctl io ... screenshot`
-across three different device types (iPhone 15, iPhone 18 Pro, iPhone
-Duo) and two iOS runtime versions (27.0, 27.1).
+Undefined symbols for architecture x86_64:
+  "_C_CancelFunction", referenced from: <initial-undefines>
+  "_C_CloseAllSessions", referenced from: <initial-undefines>
+  ... (PKCS#11 C_* function table)
+```
+The same `Pkcs11Interop` link failure as section 2, so the one simulator
+RID that does have a native asset still cannot be built.
 
-**Root cause (suspected, not confirmed from source):** Mac Catalyst has
-required scene-based lifecycle since its inception, so MAUI's scene
-delegate wiring for Mac Catalyst is mature and works. Plain iOS never
-required scenes until this SDK, so MAUI's iOS-specific scene delegate
-(window/root-view-controller setup in response to
-`scene:willConnectToSession:options:`) may simply not be fully
-implemented yet in this preview MAUI build.
+**4c. IronPrint.Xamarin:** builds, launches and renders. NuGet resolves the
+package to `lib/netstandard2.0/IronPrint.Xamarin.dll` for `net11.0-ios`
+(confirmed in `project.assets.json`; `lib/xamarin.ios10` is not selected).
+Every `PrintAsync` scenario (PDF path, PDF bytes, JPG path, grayscale,
+2 copies, landscape) then fails immediately with:
+```
+NotImplementedException: The method or operation is not implemented.
+```
+This run was unlicensed (`Licensed: False`); a licensed re-run was not done.
 
-**Impact:** no .NET MAUI iOS app's UI can be exercised at all on this
-.NET 11 RC3 + iOS 27 SDK combination -- this blocks testing *any*
-MAUI/iOS app, not just IronPrint's.
+**Not tested:** a physical iOS device (`ios-arm64`), and any x64 simulator
+run (4b never links; the test Mac only has arm64 simulator devices).
+
+**Impact:** no IronPrint 2026.11.1 package could print from an iOS
+simulator app on this SDK.
+
+**Suggested fix:** ship an `iossimulator-arm64` `IronPrintInterop.dylib`,
+and resolve the `Pkcs11Interop` static-link problem (section 2).
+
+**Correction to an earlier draft:** this section previously reported a
+Microsoft .NET MAUI defect ("iOS app never renders any UI"). That was a
+gap in this test app, not in MAUI. The iOS 27 SDK requires the UIKit scene
+lifecycle, and the app needs a `SceneDelegate : MauiUISceneDelegate` plus a
+`UISceneConfigurations` entry in `Info.plist`, as Microsoft documents at
+https://devblogs.microsoft.com/dotnet/migrate-dotnet-maui-apps-uikit-scene-lifecycle/.
+With that added, the UI renders normally. Nothing to report to Microsoft.

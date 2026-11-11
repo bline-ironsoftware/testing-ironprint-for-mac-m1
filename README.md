@@ -16,7 +16,8 @@ Checks IronPrint 2026.11.1 compatibility with .NET 11 RC3 SDK
   `net8.0-macos10.14` / `net8.0-windows7.0` assets (no `net11.0`-specific
   build yet) -- NuGet's standard same-family roll-down resolves these fine
   under our `net11.0`/`net11.0-macos`/`net11.0-maccatalyst`/etc. TargetFrameworks.
-  `net11.0-ios`/`net11.0-android` instead use `IronPrint.Xamarin` -- see below.
+  `net11.0-android` instead uses `IronPrint.Xamarin`; `net11.0-ios` uses plain
+  `IronPrint` by default (`-p:IosUseXamarin=true` switches it) -- see below.
 - **Printing requires an OS-specific TargetFramework outside Windows.**
   `ConsoleTest` targets plain `net11.0` (no OS suffix), and on Windows that's
   fine -- but on macOS, IronPrint falls back to `System.Drawing.Printing`,
@@ -93,22 +94,29 @@ Checks IronPrint 2026.11.1 compatibility with .NET 11 RC3 SDK
   unrelated reasons (missing native asset vs. an unresolvable third-party
   native dependency) -- both worth reporting to IronSoftware as separate
   issues.
-- **iOS: blocked before ever reaching IronPrint at all -- a MAUI/Microsoft.iOS
-  framework gap, not an IronPrint issue.** This iOS 27 SDK (paired with
-  `11.0.100-rc.3.26522.148`) requires apps to adopt UIKit's scene-based
-  lifecycle; without a `UIApplicationSceneManifest` entry, the app fails to
-  launch entirely (confirmed via a real simulator's unified log:
-  `Application failed to launch: UIScene life cycle is required for apps
-  built with this SDK`). Adding the minimal manifest
-  (`UIApplicationSupportsMultipleScenes=false`) fixes that crash, but the
-  app then launches with **zero errors or exceptions** (confirmed via
-  `simctl launch --console`) and shows a permanently black screen -- no UI
-  ever renders, so no scenario button can even be tapped. This looks like
-  MAUI's iOS scene-delegate wiring (window/root-view-controller setup)
-  isn't complete yet for this newly-mandatory scene lifecycle in this
-  preview MAUI build (`11.0.0-rc.2.26505.5`) -- Mac Catalyst has needed
-  scenes for years and works fine; plain iOS never did until this SDK.
-  Worth reporting to Microsoft/dotnet, not IronSoftware.
+- **iOS needs the full UIKit scene-lifecycle setup (not a MAUI bug).** The
+  iOS 27 SDK refuses to launch apps without it (`UIScene life cycle is
+  required for apps built with this SDK`). A manifest with only
+  `UIApplicationSupportsMultipleScenes` launches to a black screen; the fix,
+  per Microsoft's migration guide
+  (https://devblogs.microsoft.com/dotnet/migrate-dotnet-maui-apps-uikit-scene-lifecycle/),
+  is a `SceneDelegate : MauiUISceneDelegate` plus a `UISceneConfigurations`
+  entry in `Info.plist` naming it. With that in place the MAUI UI renders
+  (confirmed on an iPad simulator, iOS 27.0, Apple Silicon Mac).
+- **iOS: IronPrint 2026.11.1 does not print on the simulator with either
+  package -- confirmed, three distinct failures:**
+  - `IronPrint.Xamarin` (`-p:IosUseXamarin=true`): builds and runs, but NuGet
+    resolves it to `lib/netstandard2.0` (not `lib/xamarin.ios10`; confirmed in
+    `project.assets.json`) and S2-S7 all throw `NotImplementedException`
+    immediately. That run was unlicensed (`Licensed: False`).
+  - Plain `IronPrint`, `iossimulator-arm64` (the default on Apple Silicon):
+    link fails, `ld: building for 'iOS-simulator', but linking in dylib
+    (...IronPrintInterop.dylib) built for 'iOS'`. The package has no
+    `iossimulator-arm64` native asset, only `ios-arm64` and `iossimulator-x64`.
+  - Plain `IronPrint`, `-r iossimulator-x64`: link fails with the same
+    `Pkcs11Interop` undefined `_C_*` symbols as `net11.0-macos`. (This Mac
+    also has no x64 simulator devices to run it on.)
+  Not tested: a physical iPhone/iPad (`ios-arm64`).
 
 ## Repo layout
 
@@ -261,5 +269,6 @@ checked the physical output of S2-S7:
 | Console (macOS, generic net11.0) | n/a | FAIL (confirmed) | FAIL (confirmed) | FAIL (confirmed) | FAIL (confirmed) | FAIL (confirmed) | FAIL (confirmed) | FAIL (confirmed) |
 | Native macOS console (net11.0-macos) | FAIL (confirmed -- Pkcs11Interop native link error, see Known Constraints) | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
 | Mac Catalyst | FAIL (confirmed -- missing native asset, see Known Constraints) | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
-| iOS simulator | BLOCKED (confirmed -- MAUI/iOS scene-lifecycle gap, not an IronPrint issue, see Known Constraints) | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
+| iOS simulator, plain IronPrint | FAIL (confirmed -- no `iossimulator-arm64` native asset; `iossimulator-x64` hits the Pkcs11Interop link error) | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
+| iOS simulator, IronPrint.Xamarin (unlicensed run) | OK | FAIL (expected -- API absent) | FAIL (NotImplementedException) | FAIL (same) | FAIL (same) | FAIL (same) | FAIL (same) | FAIL (same) |
 | Android emulator | n/a | FAIL (confirmed) | FAIL (confirmed -- Resource not found: 0) | n/a | FAIL (confirmed -- same error) | n/a | n/a | n/a |
