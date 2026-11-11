@@ -10,6 +10,22 @@ https://github.com/bline-ironsoftware/testing-ironprint-for-mac-m1
 
 ---
 
+## Test coverage
+
+- **Apple Silicon Mac mini (macOS, Xcode 27.1):** plain console, native
+  macOS, Mac Catalyst and iOS simulator (plain IronPrint and
+  IronPrint.Xamarin).
+- **Windows PC:** Android 15 emulator (IronPrint.Xamarin, licensed).
+- **Intel Mac (macOS 15.8.3, no Xcode):** plain console only. All 11
+  scenarios fail with the same `PlatformNotSupportedException` as on Apple
+  Silicon, which is IronPrint's documented limitation for a plain `net11.0`
+  target outside Windows. Native macOS, Mac Catalyst and iOS were not built
+  on Intel.
+- **Not tested anywhere:** a physical iOS device, and a real (non
+  "Save as PDF") printer.
+
+---
+
 ## 1. IronSoftware -- Mac Catalyst: missing native asset (`maccatalyst-arm64`/`maccatalyst-x64`)
 
 **Package:** IronPrint 2026.11.1
