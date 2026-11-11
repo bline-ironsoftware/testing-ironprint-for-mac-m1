@@ -93,6 +93,22 @@ Checks IronPrint 2026.11.1 compatibility with .NET 11 RC3 SDK
   unrelated reasons (missing native asset vs. an unresolvable third-party
   native dependency) -- both worth reporting to IronSoftware as separate
   issues.
+- **iOS: blocked before ever reaching IronPrint at all -- a MAUI/Microsoft.iOS
+  framework gap, not an IronPrint issue.** This iOS 27 SDK (paired with
+  `11.0.100-rc.3.26522.148`) requires apps to adopt UIKit's scene-based
+  lifecycle; without a `UIApplicationSceneManifest` entry, the app fails to
+  launch entirely (confirmed via a real simulator's unified log:
+  `Application failed to launch: UIScene life cycle is required for apps
+  built with this SDK`). Adding the minimal manifest
+  (`UIApplicationSupportsMultipleScenes=false`) fixes that crash, but the
+  app then launches with **zero errors or exceptions** (confirmed via
+  `simctl launch --console`) and shows a permanently black screen -- no UI
+  ever renders, so no scenario button can even be tapped. This looks like
+  MAUI's iOS scene-delegate wiring (window/root-view-controller setup)
+  isn't complete yet for this newly-mandatory scene lifecycle in this
+  preview MAUI build (`11.0.0-rc.2.26505.5`) -- Mac Catalyst has needed
+  scenes for years and works fine; plain iOS never did until this SDK.
+  Worth reporting to Microsoft/dotnet, not IronSoftware.
 
 ## Repo layout
 
@@ -245,5 +261,5 @@ checked the physical output of S2-S7:
 | Console (macOS, generic net11.0) | n/a | FAIL (confirmed) | FAIL (confirmed) | FAIL (confirmed) | FAIL (confirmed) | FAIL (confirmed) | FAIL (confirmed) | FAIL (confirmed) |
 | Native macOS console (net11.0-macos) | FAIL (confirmed -- Pkcs11Interop native link error, see Known Constraints) | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
 | Mac Catalyst | FAIL (confirmed -- missing native asset, see Known Constraints) | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
-| iOS simulator | | | | | | | | |
+| iOS simulator | BLOCKED (confirmed -- MAUI/iOS scene-lifecycle gap, not an IronPrint issue, see Known Constraints) | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
 | Android emulator | n/a | FAIL (confirmed) | FAIL (confirmed -- Resource not found: 0) | n/a | FAIL (confirmed -- same error) | n/a | n/a | n/a |
