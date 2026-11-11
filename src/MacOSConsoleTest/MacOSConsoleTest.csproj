@@ -9,6 +9,8 @@
     <!-- Same exact-Xcode-27.0 pin as MauiTest's MacCatalyst/iOS targets; see
          https://aka.ms/xcode-requirement. We have 27.1, which is newer, not older. -->
     <ValidateXcodeVersion>false</ValidateXcodeVersion>
+
+    <ApplicationId>com.ironsoftware.ironprinttest.macosconsole</ApplicationId>
   </PropertyGroup>
 
   <ItemGroup>
