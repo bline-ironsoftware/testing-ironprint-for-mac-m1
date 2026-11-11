@@ -1,11 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net11.0;net11.0-maccatalyst;net11.0-ios;net11.0-android</TargetFrameworks>
+    <TargetFrameworks>net11.0;net11.0-macos;net11.0-maccatalyst;net11.0-ios;net11.0-android</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <UseMaui>true</UseMaui>
-    <SingleProject>true</SingleProject>
+    <!-- net11.0-macos is a plain console target (Xamarin.Mac-style, not MAUI) -- MAUI does not
+         support macos as a target platform the way it does ios/android/maccatalyst. -->
+    <UseMaui Condition="'$(TargetFramework)' != 'net11.0-macos'">true</UseMaui>
+    <SingleProject Condition="'$(TargetFramework)' != 'net11.0-macos'">true</SingleProject>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -14,11 +16,12 @@
   </PropertyGroup>
 
   <!-- IronPrint.Xamarin has no MacCatalyst asset at all (only monoandroid12.0, xamarin.ios10,
-       and a netstandard2.0 fallback with no native platform binding), so MacCatalyst stays on
-       the plain IronPrint package, which has a genuine native net8.0-maccatalyst11.0 build. -->
+       and a netstandard2.0 fallback with no native platform binding), so MacCatalyst (and the
+       native macos console target) stay on the plain IronPrint package, which has genuine native
+       net8.0-maccatalyst11.0 and net8.0-macos10.14 builds. -->
   <ItemGroup>
     <PackageReference Include="IronPrint" Version="$(IronPrintTestVersion)"
-                       Condition="'$(TargetFramework)' == 'net11.0' or '$(TargetFramework)' == 'net11.0-maccatalyst'" />
+                       Condition="'$(TargetFramework)' == 'net11.0' or '$(TargetFramework)' == 'net11.0-macos' or '$(TargetFramework)' == 'net11.0-maccatalyst'" />
     <PackageReference Include="IronPrint.Xamarin" Version="$(IronPrintXamarinTestVersion)"
                        Condition="'$(TargetFramework)' == 'net11.0-ios' or '$(TargetFramework)' == 'net11.0-android'" />
   </ItemGroup>

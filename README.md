@@ -6,15 +6,17 @@ Checks IronPrint 2026.11.1 compatibility with .NET 11 RC3 SDK
 
 ## Known constraints (read before running)
 
-- **Version**: all three projects pin `IronPrintTestVersion` to `2026.11.1`
-  (an MSBuild property in `IronPrintTest.Shared.csproj`, consumed by both
-  `ConsoleTest` and `MauiTest` via `ProjectReference`) -- override with
+- **Version**: all four apps pin `IronPrintTestVersion` (and, for Android/iOS,
+  `IronPrintXamarinTestVersion`) to `2026.11.1` -- MSBuild properties in
+  `IronPrintTest.Shared.csproj`, consumed by `ConsoleTest`, `MacOSConsoleTest`,
+  and `MauiTest` via `ProjectReference` -- override with
   `-p:IronPrintTestVersion=<other version>` if you need to test a different
   one. Note: as of this writing, the published `2026.11.1` package ships
   `net8.0` / `net8.0-maccatalyst11.0` / `net8.0-ios10.0` / `net8.0-android21` /
   `net8.0-macos10.14` / `net8.0-windows7.0` assets (no `net11.0`-specific
   build yet) -- NuGet's standard same-family roll-down resolves these fine
-  under our `net11.0`/`net11.0-maccatalyst`/etc. TargetFrameworks.
+  under our `net11.0`/`net11.0-macos`/`net11.0-maccatalyst`/etc. TargetFrameworks.
+  `net11.0-ios`/`net11.0-android` instead use `IronPrint.Xamarin` -- see below.
 - **Printing requires an OS-specific TargetFramework outside Windows.**
   `ConsoleTest` targets plain `net11.0` (no OS suffix), and on Windows that's
   fine -- but on macOS, IronPrint falls back to `System.Drawing.Printing`,
@@ -39,22 +41,54 @@ Checks IronPrint 2026.11.1 compatibility with .NET 11 RC3 SDK
 - **`Printer.GetPrinterNamesAsync()` / `GetPrinterNames()` do not exist at all**
   in the MacCatalyst, iOS, or Android builds of IronPrint (confirmed by
   inspecting the installed package's `IronPrint.xml`/`IronPrint.dll` per
-  TargetFramework -- present only in the desktop/Windows builds). So:
-  - On **ConsoleTest** (net11.0, desktop), S1 behaves as originally specced.
+  TargetFramework -- present only in the desktop/Windows/macos builds). So:
+  - On **ConsoleTest** and **MacOSConsoleTest**, S1 behaves as originally specced.
   - On **MauiTest**, S1 will always report FAIL with a `PlatformNotSupportedException`
     on all three targets -- that's expected, not a bug in this harness. There is
     no printer picker backed by that API on MauiTest; instead there's a plain
     printer-name text field (blank = let IronPrint use the OS default).
+- **IronPrint 2026.11.1 cannot build for Mac Catalyst at all -- confirmed
+  packaging gap, not fixable from this repo.** The package's native
+  `IronPrintInterop.dylib` ships for `ios-arm64`, `iossimulator-x64`,
+  `osx-arm64`, and `osx-x64` -- but **not** `maccatalyst-arm64`/`maccatalyst-x64`.
+  .NET's RID graph falls `maccatalyst-arm64` back to `ios-arm64` (not
+  `osx-arm64`, which would actually be ABI-compatible), so the linker pulls in
+  the iOS-built dylib and fails: `ld: building for 'macCatalyst', but linking
+  in dylib (...IronPrintInterop.dylib) built for 'iOS'`. There is no
+  MSBuild property that overrides which native asset NuGet selects here, and
+  we have no source for the dylib to rebuild it ourselves. **This is the
+  actual, final answer for MacCatalyst: it does not work, due to a missing
+  native asset in the IronPrint package itself** -- report to IronSoftware.
+  `MacOSConsoleTest` (a plain, non-MAUI `net11.0-macos` console app) exists
+  specifically to test IronPrint on native Mac independently of this gap,
+  since its RID resolves straight to `osx-arm64`, which does have a correct
+  native asset.
+- **Android: `Printer.Initialize(Android.Content.Context)` must be called
+  before any other `Printer` method** -- confirmed via a real emulator run
+  (`NullReferenceException: MainActivity is undefined` without it); see
+  `Platforms/Android/MainActivity.cs`. Also confirmed: **every `PrintAsync`
+  call on Android still fails** afterward with
+  `FileNotFoundException: Resource not found: 0`, reproduced identically on
+  both the plain `IronPrint` and `IronPrint.Xamarin` packages, for both PDF
+  and JPG input. Root cause not identified (doesn't appear in logcat, doesn't
+  appear as a literal string in IronPrint's own assemblies or its key
+  dependencies) -- a confirmed, unresolved Android blocker worth reporting to
+  IronSoftware, not something fixable from this repo.
 
 ## Repo layout
 
 ```
 src/
   IronPrintTest.Shared/   Scenario definitions (S1-S7) + results.md/json writer,
-                          shared by both test apps. Multi-targets net11.0 (for
-                          ConsoleTest) and net11.0-maccatalyst/-ios/-android
-                          (for MauiTest).
-  ConsoleTest/            net11.0 console app. Runs all 7 scenarios in order.
+                          shared by all three test apps. Multi-targets net11.0,
+                          net11.0-macos, net11.0-maccatalyst, net11.0-ios, and
+                          net11.0-android.
+  ConsoleTest/            net11.0 console app (generic, no OS suffix). Runs all
+                          7 scenarios in order. Printing does NOT work here on
+                          macOS -- see Known Constraints.
+  MacOSConsoleTest/       net11.0-macos console app (native Mac, not MAUI).
+                          Same 7 scenarios -- exists to test IronPrint on Mac
+                          independently of the MacCatalyst packaging gap.
   MauiTest/               net11.0-maccatalyst;net11.0-ios;net11.0-android.
                           One page, one button per scenario, a log, and a
                           printer-name field.
@@ -93,6 +127,7 @@ chmod +x dotnet-install.sh
 export PATH="$HOME/.dotnet:$PATH"   # or wherever --install-dir pointed, if you used one
 
 dotnet workload install maui
+dotnet workload install macos   # needed for MacOSConsoleTest (net11.0-macos)
 
 xcode-select --install          # if Xcode command line tools aren't already present
 sudo xcodebuild -license accept  # accept the Xcode license, needed for iOS/MacCatalyst builds
@@ -134,7 +169,19 @@ dotnet run -- --printer "Your Printer Name"
 ```
 
 Writes `results.md` and `results.json` next to the built output
-(`bin/<config>/net11.0/`).
+(`bin/<config>/net11.0/`). Expect all 7 scenarios to `FAIL` on macOS -- see
+Known Constraints; this isn't a harness bug.
+
+### Native macOS console
+
+```bash
+cd src/MacOSConsoleTest
+dotnet run
+```
+
+This is the one most likely to show real printing working on Mac, since its
+RID (`osx-arm64`) has a correctly-built native IronPrint asset -- unlike
+MacCatalyst, which does not (see Known Constraints).
 
 ### Mac Catalyst
 
@@ -176,7 +223,8 @@ checked the physical output of S2-S7:
 
 | Platform | Build | Printer list (S1) | PDF path (S2) | PDF bytes (S3) | JPG (S4) | Grayscale (S5) | 2 copies (S6) | Landscape (S7) |
 |----------|-------|--------------------|----------------|-----------------|----------|-----------------|----------------|-----------------|
-| Console (macOS) | | | | | | | | |
-| Mac Catalyst | | | | | | | | |
+| Console (macOS, generic net11.0) | n/a | FAIL (confirmed) | FAIL (confirmed) | FAIL (confirmed) | FAIL (confirmed) | FAIL (confirmed) | FAIL (confirmed) | FAIL (confirmed) |
+| Native macOS console (net11.0-macos) | | | | | | | | |
+| Mac Catalyst | FAIL (confirmed -- missing native asset, see Known Constraints) | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
 | iOS simulator | | | | | | | | |
-| Android emulator | | | | | | | | |
+| Android emulator | n/a | FAIL (confirmed) | FAIL (confirmed -- Resource not found: 0) | n/a | FAIL (confirmed -- same error) | n/a | n/a | n/a |
