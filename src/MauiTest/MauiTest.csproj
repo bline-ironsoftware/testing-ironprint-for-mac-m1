@@ -57,10 +57,10 @@
       <GeneratedLicenseKeyFile>$(IntermediateOutputPath)GeneratedLicenseKey.g.cs</GeneratedLicenseKeyFile>
     </PropertyGroup>
     <ItemGroup>
-      <_LicenseKeyLines Include="namespace MauiTest;" />
+      <_LicenseKeyLines Include="namespace MauiTest%3B" />
       <_LicenseKeyLines Include="internal static class BuildTimeLicenseKey" />
       <_LicenseKeyLines Include="{" />
-      <_LicenseKeyLines Include="    public const string Value = &quot;$(SUITE_LICENSE_KEY)&quot;;" />
+      <_LicenseKeyLines Include="    public const string Value = &quot;$(SUITE_LICENSE_KEY)&quot;%3B" />
       <_LicenseKeyLines Include="}" />
     </ItemGroup>
     <WriteLinesToFile File="$(GeneratedLicenseKeyFile)" Lines="@(_LicenseKeyLines)" Overwrite="true" />
