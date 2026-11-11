@@ -10,10 +10,17 @@
 
   <PropertyGroup>
     <IronPrintTestVersion Condition="'$(IronPrintTestVersion)' == ''">2026.11.1</IronPrintTestVersion>
+    <IronPrintXamarinTestVersion Condition="'$(IronPrintXamarinTestVersion)' == ''">2026.11.1</IronPrintXamarinTestVersion>
   </PropertyGroup>
 
+  <!-- IronPrint.Xamarin has no MacCatalyst asset at all (only monoandroid12.0, xamarin.ios10,
+       and a netstandard2.0 fallback with no native platform binding), so MacCatalyst stays on
+       the plain IronPrint package, which has a genuine native net8.0-maccatalyst11.0 build. -->
   <ItemGroup>
-    <PackageReference Include="IronPrint" Version="$(IronPrintTestVersion)" />
+    <PackageReference Include="IronPrint" Version="$(IronPrintTestVersion)"
+                       Condition="'$(TargetFramework)' == 'net11.0' or '$(TargetFramework)' == 'net11.0-maccatalyst'" />
+    <PackageReference Include="IronPrint.Xamarin" Version="$(IronPrintXamarinTestVersion)"
+                       Condition="'$(TargetFramework)' == 'net11.0-ios' or '$(TargetFramework)' == 'net11.0-android'" />
   </ItemGroup>
 
 </Project>
