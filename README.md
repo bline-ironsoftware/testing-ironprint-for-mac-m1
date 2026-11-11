@@ -77,8 +77,11 @@ Checks IronPrint 2026.11.1 compatibility with .NET 11 RC3 SDK
   PrintSettings)`), for PDF and JPG. **The `byte[]` overload works**: S3
   opens the Android print dialog ("Save as PDF") with a correct preview
   (licensed run, `IronPrint.Xamarin`, Android 15 emulator). Workaround: read
-  the file and pass the bytes. S4-S7 use paths, so JPG and the grayscale /
-  copies / landscape settings are untested through the working overload.
+  the file and pass the bytes (PDF only). S8-S11 repeat S4-S7 through the
+  `byte[]` overload: JPG bytes fail with `InvalidDataException: Failed to
+  decode bitmap resource` (S8, S9, S11; the JPEG is valid and intact in the
+  sandbox), and S10 (2 copies, PDF) opens the dialog but shows "Copies: 1",
+  which is inconclusive because "Save as PDF" is the only printer.
 - **`net11.0-macos` also fails to build -- confirmed, different root cause
   than MacCatalyst, also not fixable from this repo.** `clang++` fails
   linking with `Undefined symbols for architecture arm64: "_C_CancelFunction"`,
@@ -282,3 +285,5 @@ checked the physical output of S2-S7:
 | iOS simulator, plain IronPrint | FAIL (confirmed -- no `iossimulator-arm64` native asset; `iossimulator-x64` hits the Pkcs11Interop link error) | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
 | iOS simulator, IronPrint.Xamarin (unlicensed run) | OK | FAIL (expected -- API absent) | FAIL (NotImplementedException) | FAIL (same) | FAIL (same) | FAIL (same) | FAIL (same) | FAIL (same) |
 | Android emulator (IronPrint.Xamarin, licensed) | OK | FAIL (expected -- API absent) | FAIL (Resource not found: 0) | SENT (print dialog opens, preview correct) | FAIL (Resource not found: 0) | FAIL (same) | FAIL (same) | FAIL (same) |
+
+Android `byte[]` scenarios (not in the table): S8 JPG, S9 grayscale JPG, S11 landscape JPG all FAIL (`Failed to decode bitmap resource`); S10 2 copies PDF opens the print dialog with "Copies: 1" (inconclusive).

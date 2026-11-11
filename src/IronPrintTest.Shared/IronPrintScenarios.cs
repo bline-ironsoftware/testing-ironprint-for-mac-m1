@@ -67,7 +67,49 @@ public static class IronPrintScenarios
             ExpectedOnPaper = "Expect the JPG's TOP arrow to point along the long edge of the paper.",
             RunAsync = RunS7,
         },
+        new()
+        {
+            Id = "S8",
+            Name = "PrintAsync with the JPG as byte[]",
+            RunAsync = ctx => RunBytes("S8", ctx.JpgPath, new PrintSettings { PrinterName = ctx.PrinterName }),
+        },
+        new()
+        {
+            Id = "S9",
+            Name = "Grayscale = true (JPG as byte[])",
+            ExpectedOnPaper = "Expect the JPG's colour bars to print as shades of grey.",
+            RunAsync = ctx => RunBytes("S9", ctx.JpgPath, new PrintSettings { PrinterName = ctx.PrinterName, Grayscale = true }),
+        },
+        new()
+        {
+            Id = "S10",
+            Name = "2 copies (PDF as byte[])",
+            ExpectedOnPaper = "Expect 2 full copies of the 2-page PDF (page order: 1, 2, 1, 2).",
+            RunAsync = ctx => RunBytes("S10", ctx.PdfPath, new PrintSettings { PrinterName = ctx.PrinterName, NumberOfCopies = 2 }),
+        },
+        new()
+        {
+            Id = "S11",
+            Name = "Landscape orientation (JPG as byte[])",
+            ExpectedOnPaper = "Expect the JPG's TOP arrow to point along the long edge of the paper.",
+            RunAsync = ctx => RunBytes("S11", ctx.JpgPath, new PrintSettings { PrinterName = ctx.PrinterName, PaperOrientation = PaperOrientation.Landscape }),
+        },
     };
+
+    private static async Task<ScenarioResult> RunBytes(string id, string path, PrintSettings settings)
+    {
+        var def = All.Single(s => s.Id == id);
+        try
+        {
+            var bytes = await File.ReadAllBytesAsync(path);
+            await Printer.PrintAsync(bytes, settings);
+            return Sent(def.Id, def.Name, def.ExpectedOnPaper);
+        }
+        catch (Exception ex)
+        {
+            return Fail(def.Id, def.Name, ex);
+        }
+    }
 
     private static ScenarioResult Pass(string id, string name, string message) =>
         new() { Id = id, Name = name, Status = ScenarioStatus.Pass, Message = message };

@@ -98,7 +98,7 @@ Apple's app-bundle model.
 
 ---
 
-## 3. IronSoftware -- Android: `PrintAsync(string path, ...)` fails with `Resource not found: 0`; the `byte[]` overload works
+## 3. IronSoftware -- Android: only PDF-as-`byte[]` prints; file paths fail with `Resource not found: 0`, JPG bytes fail to decode
 
 **Package:** IronPrint.Xamarin 2026.11.1 (plain IronPrint 2026.11.1 gave the same error in an earlier run)
 **Target:** `net11.0-android`, Android 15 (API 35) emulator, licensed (`Licensed: True`)
@@ -136,11 +136,25 @@ Android system print dialog ("Save as PDF") with a correct 2-page preview.
 Android resource-ID lookup returning 0, but that is a guess; the code is
 obfuscated and was not decompiled.
 
-**Not tested:** JPG input and the grayscale / copies / landscape settings
-through the `byte[]` overload (the test scenarios for those use paths).
+**JPG as `byte[]` also fails** (S8, S9, S11: plain, grayscale, landscape):
+```
+System.IO.InvalidDataException: Failed to decode bitmap resource
+   at Iron.Print.Extensions.geiale.vfopli(Byte[] nwgeho, Options nwgehp)
+   at Iron.Print.Extensions.geiala.kqnhlw.MoveNext()
+   at IronPrint.Printer.PrintAsync(Byte[] fileData, PrintSettings settings)
+```
+The file is a valid baseline RGB JPEG (1600x1000), and the copy in the app
+sandbox has the same MD5 as the original. So no image could be printed on
+Android by either overload, and the grayscale and landscape settings could
+not be exercised.
 
-**Impact:** printing from a file path does not work on Android.
-**Workaround:** read the file and pass the bytes.
+**`NumberOfCopies = 2` (S10, PDF as `byte[]`):** the print dialog opens with
+a correct preview but shows "Copies: 1". Inconclusive: the only printer on
+the emulator is "Save as PDF", which may not accept a copy count.
+
+**Impact:** on Android only PDFs passed as `byte[]` reach the print dialog;
+file paths and images do not.
+**Workaround (PDF only):** read the file and pass the bytes.
 
 ---
 
