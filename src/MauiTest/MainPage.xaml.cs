@@ -17,7 +17,7 @@ public partial class MainPage : ContentPage
     {
         try
         {
-            IronPrint.License.LicenseKey = Environment.GetEnvironmentVariable("IRONPRINT_LICENSE_KEY");
+            IronPrint.License.LicenseKey = Environment.GetEnvironmentVariable("SUITE_LICENSE_KEY");
 
             var pdfPath = await CopyAppPackageFileToCacheAsync("TestFiles/sample.pdf");
             var jpgPath = await CopyAppPackageFileToCacheAsync("TestFiles/sample.jpg");

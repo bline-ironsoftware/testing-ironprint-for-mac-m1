@@ -112,8 +112,12 @@ brew install mono-libgdiplus
 ```bash
 git clone <this-repo-url>
 cd ironprint-net11-mac
-export IRONPRINT_LICENSE_KEY="..."   # never hard-code this
+export IRONPRINT_LICENSE_KEY="..."   # used by ConsoleTest -- never hard-code this
+export SUITE_LICENSE_KEY="..."       # used by MauiTest -- never hard-code this
 ```
+
+Note the two apps read different env var names for the license key:
+`ConsoleTest` uses `IRONPRINT_LICENSE_KEY`, `MauiTest` uses `SUITE_LICENSE_KEY`.
 
 Drop the real test assets into `TestFiles/` if they aren't already there --
 see `TestFiles/README.md` for what each file should look like.
