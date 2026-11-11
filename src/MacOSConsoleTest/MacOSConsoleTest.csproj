@@ -11,6 +11,12 @@
     <ValidateXcodeVersion>false</ValidateXcodeVersion>
 
     <ApplicationId>com.ironsoftware.ironprinttest.macosconsole</ApplicationId>
+
+    <!-- IronPrint depends on Pkcs11Interop, whose native PKCS#11 symbols (C_CancelFunction,
+         C_CloseSession, etc.) can't be statically resolved under full AOT linking -- a standard
+         .NET for Mac/iOS workaround for this class of error is running under the Mono
+         interpreter instead of fully static/AOT-linked native code. -->
+    <UseInterpreter>true</UseInterpreter>
   </PropertyGroup>
 
   <ItemGroup>
