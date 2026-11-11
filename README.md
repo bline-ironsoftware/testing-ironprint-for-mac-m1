@@ -39,13 +39,16 @@ Checks IronPrint 2026.11.1 compatibility with .NET 11 RC3 SDK
   `sudo xcodebuild -license accept` again, before attempting MacCatalyst or
   iOS. Android is unaffected -- it has no Xcode dependency.
 - **`Printer.GetPrinterNamesAsync()` / `GetPrinterNames()` do not exist at all**
-  in the MacCatalyst, iOS, or Android builds of IronPrint (confirmed by
-  inspecting the installed package's `IronPrint.xml`/`IronPrint.dll` per
-  TargetFramework -- present only in the desktop/Windows/macos builds). So:
-  - On **ConsoleTest** and **MacOSConsoleTest**, S1 behaves as originally specced.
-  - On **MauiTest**, S1 will always report FAIL with a `PlatformNotSupportedException`
-    on all three targets -- that's expected, not a bug in this harness. There is
-    no printer picker backed by that API on MauiTest; instead there's a plain
+  outside true Windows desktop builds -- confirmed absent from macOS,
+  MacCatalyst, iOS, and Android alike (every mention of it in those
+  TargetFrameworks' XML docs is an unresolved `!:Printer.GetPrinterNamesAsync()`
+  doc-comment cross-reference, not an actual member; only present in
+  `net11.0`/`net11.0-windows`). So:
+  - On **ConsoleTest** (Windows only) and **MacOSConsoleTest**, S1 will report
+    FAIL with a `PlatformNotSupportedException` when run on macOS -- expected,
+    not a bug in this harness.
+  - On **MauiTest**, same thing on all three targets. There is no printer
+    picker backed by that API on MauiTest; instead there's a plain
     printer-name text field (blank = let IronPrint use the OS default).
 - **IronPrint 2026.11.1 cannot build for Mac Catalyst at all -- confirmed
   packaging gap, not fixable from this repo.** The package's native
