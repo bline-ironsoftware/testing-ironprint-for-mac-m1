@@ -8,6 +8,9 @@
          support macos as a target platform the way it does ios/android/maccatalyst. -->
     <UseMaui Condition="'$(TargetFramework)' != 'net11.0-macos'">true</UseMaui>
     <SingleProject Condition="'$(TargetFramework)' != 'net11.0-macos'">true</SingleProject>
+    <!-- No MAUI conditional compilation symbols (ANDROID/IOS/MACCATALYST) get defined for this
+         TFM since MAUI isn't involved here, so define our own for PlatformPrinterNames.cs. -->
+    <DefineConstants Condition="'$(TargetFramework)' == 'net11.0-macos'">$(DefineConstants);MACOS</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup>
