@@ -70,14 +70,15 @@ Checks IronPrint 2026.11.1 compatibility with .NET 11 RC3 SDK
 - **Android: `Printer.Initialize(Android.Content.Context)` must be called
   before any other `Printer` method** -- confirmed via a real emulator run
   (`NullReferenceException: MainActivity is undefined` without it); see
-  `Platforms/Android/MainActivity.cs`. Also confirmed: **every `PrintAsync`
-  call on Android still fails** afterward with
-  `FileNotFoundException: Resource not found: 0`, reproduced identically on
-  both the plain `IronPrint` and `IronPrint.Xamarin` packages, for both PDF
-  and JPG input. Root cause not identified (doesn't appear in logcat, doesn't
-  appear as a literal string in IronPrint's own assemblies or its key
-  dependencies) -- a confirmed, unresolved Android blocker worth reporting to
-  IronSoftware, not something fixable from this repo.
+  `Platforms/Android/MainActivity.cs`. **The file-path overload
+  `PrintAsync(string path, ...)` fails on Android** with
+  `FileNotFoundException: Resource not found: 0`, thrown inside IronPrint
+  (`Iron.Print.Extensions...` directly under `Printer.PrintAsync(String,
+  PrintSettings)`), for PDF and JPG. **The `byte[]` overload works**: S3
+  opens the Android print dialog ("Save as PDF") with a correct preview
+  (licensed run, `IronPrint.Xamarin`, Android 15 emulator). Workaround: read
+  the file and pass the bytes. S4-S7 use paths, so JPG and the grayscale /
+  copies / landscape settings are untested through the working overload.
 - **`net11.0-macos` also fails to build -- confirmed, different root cause
   than MacCatalyst, also not fixable from this repo.** `clang++` fails
   linking with `Undefined symbols for architecture arm64: "_C_CancelFunction"`,
@@ -259,6 +260,15 @@ dotnet build -t:InstallAndroidDependencies -f net11.0-android
 dotnet build -t:Run -f net11.0-android
 ```
 
+On a Windows PC (no `macos` workload), restrict the build to Android, and
+point at the Android SDK if it is not in the default location:
+
+```bash
+dotnet build -t:Install -f net11.0-android -p:TargetFrameworks=net11.0-android "-p:AndroidSdkDirectory=%LOCALAPPDATA%\Android\Sdk"
+```
+
+Failed scenarios write their full stack trace to logcat (tag `DOTNET`).
+
 ## Report
 
 Fill this in (or paste `results.md`'s table) once you've run both apps and
@@ -271,4 +281,4 @@ checked the physical output of S2-S7:
 | Mac Catalyst | FAIL (confirmed -- missing native asset, see Known Constraints) | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
 | iOS simulator, plain IronPrint | FAIL (confirmed -- no `iossimulator-arm64` native asset; `iossimulator-x64` hits the Pkcs11Interop link error) | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
 | iOS simulator, IronPrint.Xamarin (unlicensed run) | OK | FAIL (expected -- API absent) | FAIL (NotImplementedException) | FAIL (same) | FAIL (same) | FAIL (same) | FAIL (same) | FAIL (same) |
-| Android emulator | n/a | FAIL (confirmed) | FAIL (confirmed -- Resource not found: 0) | n/a | FAIL (confirmed -- same error) | n/a | n/a | n/a |
+| Android emulator (IronPrint.Xamarin, licensed) | OK | FAIL (expected -- API absent) | FAIL (Resource not found: 0) | SENT (print dialog opens, preview correct) | FAIL (Resource not found: 0) | FAIL (same) | FAIL (same) | FAIL (same) |

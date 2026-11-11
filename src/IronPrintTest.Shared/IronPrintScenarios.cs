@@ -75,8 +75,12 @@ public static class IronPrintScenarios
     private static ScenarioResult Sent(string id, string name, string? expectedOnPaper) =>
         new() { Id = id, Name = name, Status = ScenarioStatus.Sent, ExpectedOnPaper = expectedOnPaper };
 
-    private static ScenarioResult Fail(string id, string name, Exception ex) =>
-        new() { Id = id, Name = name, Status = ScenarioStatus.Fail, Message = $"{ex.GetType().Name}: {ex.Message}" };
+    private static ScenarioResult Fail(string id, string name, Exception ex)
+    {
+        // Full stack trace goes to stderr (logcat on Android, device console on iOS).
+        Console.Error.WriteLine($"[{id}] {ex}");
+        return new() { Id = id, Name = name, Status = ScenarioStatus.Fail, Message = $"{ex.GetType().Name}: {ex.Message}" };
+    }
 
     private static async Task<ScenarioResult> RunS1(ScenarioContext ctx)
     {

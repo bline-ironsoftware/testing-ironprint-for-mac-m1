@@ -98,45 +98,49 @@ Apple's app-bundle model.
 
 ---
 
-## 3. IronSoftware -- Android: every `PrintAsync` call fails with `Resource not found: 0`
+## 3. IronSoftware -- Android: `PrintAsync(string path, ...)` fails with `Resource not found: 0`; the `byte[]` overload works
 
-**Package:** IronPrint 2026.11.1 **and** IronPrint.Xamarin 2026.11.1 (both tested, identical result)
-**Target:** `net11.0-android`, API 24+, tested on an API 35 emulator (Pixel-class device)
+**Package:** IronPrint.Xamarin 2026.11.1 (plain IronPrint 2026.11.1 gave the same error in an earlier run)
+**Target:** `net11.0-android`, Android 15 (API 35) emulator, licensed (`Licensed: True`)
 **Environment:** .NET 11 RC3 SDK, Android SDK platform 37 (Microsoft.Android.Sdk.Windows 37.0.0-preview.6.59)
 
 **Repro:**
 ```csharp
 Printer.Initialize(this); // in MainActivity.OnCreate, after base.OnCreate
-// ... later, after licensing:
-await Printer.PrintAsync(pdfPath); // or jpgPath, or the byte[] overload
+await Printer.PrintAsync(pdfPath, new PrintSettings());            // FAILS
+await Printer.PrintAsync(File.ReadAllBytes(pdfPath), new PrintSettings()); // works
 ```
 
-**Actual result:**
+**Actual result (path overload, PDF and JPG, with or without grayscale /
+copies / landscape settings):**
 ```
-FileNotFoundException: Resource not found: 0
+System.IO.FileNotFoundException: Resource not found: 0
+   at Iron.Print.Extensions.geiala.kqnhlv.MoveNext()
+   at IronPrint.Printer.PrintAsync(String path, PrintSettings settings)
 ```
+The exception is thrown inside IronPrint's own code, directly under the
+path overload.
 
-**Confirmed, ruled out:**
-- Not a missing-file issue -- the harness logs confirm both test files
-  (`sample.pdf`, `sample.jpg`) were successfully copied into the app's
-  sandbox cache directory *before* the error, and the same error occurs
-  for both the PDF-path and JPG-path scenarios identically.
-- Not fixed by `Printer.Initialize(Android.Content.Context)` -- that call
-  is required (without it: `NullReferenceException: MainActivity is
-  undefined`) but doesn't change this subsequent error once added.
-- Not package-specific -- identical error, verbatim, on both the plain
-  `IronPrint` package and the legacy `IronPrint.Xamarin` package.
-- Doesn't appear in Android's own `logcat` at all (it's a purely
-  .NET-level exception, never surfaces as a Java/Android system error).
-- The literal string `"Resource not found"` does not appear anywhere in
-  `IronPrint.dll`, `IronPrint.Xamarin.dll`, or `Microsoft.Maui.Graphics.dll`
-  (checked via a raw UTF-16 string scan of each assembly), and no bundled
-  `androidx.print` or other print-related native library exists in the
-  build output -- so the exact throw site couldn't be identified without
-  a working IL decompiler (blocked in our environment).
+**Works:** `PrintAsync(byte[], PrintSettings)` with the same PDF opens the
+Android system print dialog ("Save as PDF") with a correct 2-page preview.
 
-**Impact:** `PrintAsync` is completely non-functional on Android with this
-IronPrint version, for both PDF and image input.
+**Ruled out:**
+- Not a missing file: the same file is read successfully with
+  `File.ReadAllBytes` and prints through the `byte[]` overload.
+- Not licensing: the run was licensed.
+- `Printer.Initialize(Android.Content.Context)` is required (without it:
+  `NullReferenceException: MainActivity is undefined`) but does not change
+  this error.
+
+**Not determined:** why the path overload fails. The message suggests an
+Android resource-ID lookup returning 0, but that is a guess; the code is
+obfuscated and was not decompiled.
+
+**Not tested:** JPG input and the grayscale / copies / landscape settings
+through the `byte[]` overload (the test scenarios for those use paths).
+
+**Impact:** printing from a file path does not work on Android.
+**Workaround:** read the file and pass the bytes.
 
 ---
 
