@@ -46,4 +46,27 @@
     <ProjectReference Include="..\IronPrintTest.Shared\IronPrintTest.Shared.csproj" />
   </ItemGroup>
 
+  <!-- Mobile/MacCatalyst processes are sandboxed and can't see the build machine's
+       environment variables at runtime, so Environment.GetEnvironmentVariable("SUITE_LICENSE_KEY")
+       always returns null on-device. Bake the value in at build time instead, read from
+       the SAME env var on whichever machine runs `dotnet build`/`dotnet run`. The generated
+       file lives under $(IntermediateOutputPath) (obj/, already gitignored) and the key is
+       never written anywhere under src/ or committed to git. -->
+  <Target Name="GenerateBuildTimeLicenseKey" BeforeTargets="CoreCompile">
+    <PropertyGroup>
+      <GeneratedLicenseKeyFile>$(IntermediateOutputPath)GeneratedLicenseKey.g.cs</GeneratedLicenseKeyFile>
+    </PropertyGroup>
+    <ItemGroup>
+      <_LicenseKeyLines Include="namespace MauiTest;" />
+      <_LicenseKeyLines Include="internal static class BuildTimeLicenseKey" />
+      <_LicenseKeyLines Include="{" />
+      <_LicenseKeyLines Include="    public const string Value = &quot;$(SUITE_LICENSE_KEY)&quot;;" />
+      <_LicenseKeyLines Include="}" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(GeneratedLicenseKeyFile)" Lines="@(_LicenseKeyLines)" Overwrite="true" />
+    <ItemGroup>
+      <Compile Include="$(GeneratedLicenseKeyFile)" />
+    </ItemGroup>
+  </Target>
+
 </Project>

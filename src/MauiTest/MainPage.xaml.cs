@@ -17,7 +17,14 @@ public partial class MainPage : ContentPage
     {
         try
         {
-            IronPrint.License.LicenseKey = Environment.GetEnvironmentVariable("SUITE_LICENSE_KEY");
+            var licenseKey = Environment.GetEnvironmentVariable("SUITE_LICENSE_KEY");
+            if (string.IsNullOrEmpty(licenseKey))
+            {
+                // Mobile/MacCatalyst processes can't see the build machine's env vars at
+                // runtime -- fall back to the value baked in at build time (see MauiTest.csproj).
+                licenseKey = BuildTimeLicenseKey.Value;
+            }
+            IronPrint.License.LicenseKey = licenseKey;
 
             var pdfPath = await CopyAppPackageFileToCacheAsync("TestFiles/sample.pdf");
             var jpgPath = await CopyAppPackageFileToCacheAsync("TestFiles/sample.jpg");
