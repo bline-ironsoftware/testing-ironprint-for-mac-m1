@@ -80,25 +80,29 @@ pick_simulator() {
   echo "$udid"
 }
 
-# ios_run_test <label> <root> <tfm> <extra build args...>
+# ios_run_test <label> <root> <tfm> <name> <extra build args...>
 ios_run_test() {
-  local label="$1" root="$2" tfm="$3"; shift 3
-  build_test "$label" "ios-xamarin-build" "$root" src/MauiTest -f "$tfm" -p:IosUseXamarin=true "$@" || return
-  local app udid log="$OUT/$label-ios-xamarin-run.log"
+  local label="$1" root="$2" tfm="$3" name="$4"; shift 4
+  build_test "$label" "$name-build" "$root" src/MauiTest -f "$tfm" -p:IosUseXamarin=true "$@" || return
+  local app udid log="$OUT/$label-$name-run.log"
   app=$(find "$root/src/MauiTest/bin/Debug/$tfm" -maxdepth 2 -name MauiTest.app -type d | head -1)
-  udid=$(pick_simulator) || { row "$label ios-xamarin-run" "NOT RUN" "no iOS simulator found"; return; }
-  xcrun simctl install "$udid" "$app" > "$log" 2>&1 || { row "$label ios-xamarin-run" "NOT RUN" "install failed, see log"; return; }
-  SIMCTL_CHILD_IRONPRINT_AUTORUN="$SCENARIOS" \
-    xcrun simctl launch --console --terminate-running-process "$udid" "$BUNDLE_ID" >> "$log" 2>&1 &
+  udid=$(pick_simulator) || { row "$label $name-run" "NOT RUN" "no iOS simulator found"; return; }
+  xcrun simctl install "$udid" "$app" > "$log" 2>&1 || { row "$label $name-run" "NOT RUN" "install failed, see log"; return; }
+  SIMCTL_CHILD_IRONPRINT_AUTORUN="$SCENARIOS"     xcrun simctl launch --console --terminate-running-process "$udid" "$BUNDLE_ID" >> "$log" 2>&1 &
   local pid=$! waited=0
   while [ $waited -lt $RUN_TIMEOUT ] && ! grep -q "Auto-run finished" "$log"; do sleep 2; waited=$((waited + 2)); done
-  xcrun simctl io "$udid" screenshot "$OUT/$label-ios-xamarin-run.png" >/dev/null 2>&1
+  xcrun simctl io "$udid" screenshot "$OUT/$label-$name-run.png" >/dev/null 2>&1
   xcrun simctl terminate "$udid" "$BUNDLE_ID" >/dev/null 2>&1
   kill $pid >/dev/null 2>&1
-  local header status
-  header=$(grep -m1 -oE "IronPrint [0-9.]+ on .*Licensed: [A-Za-z]+" "$log" | cell)
-  if grep -q "Auto-run finished" "$log"; then status="RAN"; else status="TIMED OUT after ${RUN_TIMEOUT}s"; fi
-  row "$label ios-xamarin-run" "$status" "$header"
+  local detail status
+  if grep -q "Auto-run finished" "$log"; then
+    status="RAN"
+    detail="$(grep -m1 -oE "IronPrint [0-9.]+ on .*Licensed: [A-Za-z]+" "$log"); $(grep -m1 -oE "Licence key set in [0-9.]+s" "$log")"
+  else
+    status="TIMED OUT after ${RUN_TIMEOUT}s"
+    detail="last app log line: $(grep "\[APPLOG\]" "$log" | tail -1 | sed 's/^.*\[APPLOG\] //')"
+  fi
+  row "$label $name-run" "$status" "$(echo "$detail" | cell)"
   grep -E "\[APPLOG\].*\[(PASS|FAIL|SENT)" "$log" | sed 's/^.*\[APPLOG\] [0-9:]* /    /' >> "$SUMMARY"
 }
 
@@ -118,7 +122,12 @@ run_suite() {
   build_test "$label" "native-macos-build" "$root" src/MacOSConsoleTest
   build_test "$label" "maccatalyst-build" "$root" src/MauiTest -f "$n-maccatalyst" "$@"
   build_test "$label" "ios-plain-build" "$root" src/MauiTest -f "$n-ios" "$@"
-  ios_run_test "$label" "$root" "$n-ios" "$@"
+  ios_run_test "$label" "$root" "$n-ios" ios-xamarin "$@"
+  # On .NET 10 the licence-key call hangs with the Mono interpreter (seen on Android);
+  # a second pass with the interpreter off shows whether the scenarios then run.
+  if [ "$label" = net10 ]; then
+    ios_run_test "$label" "$root" "$n-ios" ios-xamarin-nointerp "$@" -p:UseInterpreter=false
+  fi
 }
 
 HAS_XCODE=no; xcodebuild -version >/dev/null 2>&1 && HAS_XCODE=yes

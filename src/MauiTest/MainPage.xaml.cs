@@ -24,7 +24,12 @@ public partial class MainPage : ContentPage
                 // runtime -- fall back to the value baked in at build time (see MauiTest.csproj).
                 licenseKey = BuildTimeLicenseKey.Value;
             }
-            IronPrint.License.LicenseKey = licenseKey;
+            // Off the UI thread: on .NET 10 debug builds this call has been seen to never
+            // return, which otherwise freezes the app on its splash screen.
+            AppendLog("Setting the IronPrint licence key...");
+            var started = DateTime.Now;
+            await Task.Run(() => IronPrint.License.LicenseKey = licenseKey);
+            AppendLog($"Licence key set in {(DateTime.Now - started).TotalSeconds:F1}s.");
 
             var pdfPath = await CopyAppPackageFileToCacheAsync("TestFiles/sample.pdf");
             var jpgPath = await CopyAppPackageFileToCacheAsync("TestFiles/sample.jpg");
