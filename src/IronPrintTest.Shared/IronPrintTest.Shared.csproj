@@ -5,10 +5,12 @@
     <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net11.0-windows10.0.19041.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <!-- net11.0-macos is a plain console target (Xamarin.Mac-style, not MAUI); MAUI does not
-         support macos as a target platform the way it does ios/android/maccatalyst. -->
-    <UseMaui Condition="'$(TargetFramework)' != 'net11.0-macos'">true</UseMaui>
-    <SingleProject Condition="'$(TargetFramework)' != 'net11.0-macos'">true</SingleProject>
+    <!-- MAUI only for the MAUI app's platforms. Not for net11.0-macos (a plain native
+         console target) or plain net11.0, so the console app builds without MAUI workloads. -->
+    <IsMauiTarget>false</IsMauiTarget>
+    <IsMauiTarget Condition="$(TargetFramework.Contains('-')) and '$(TargetFramework)' != 'net11.0-macos'">true</IsMauiTarget>
+    <UseMaui Condition="'$(IsMauiTarget)' == 'true'">true</UseMaui>
+    <SingleProject Condition="'$(IsMauiTarget)' == 'true'">true</SingleProject>
     <!-- No MAUI conditional compilation symbols (ANDROID/IOS/MACCATALYST) get defined for this
          TFM since MAUI isn't involved here, so define our own for PlatformPrinterNames.cs. -->
     <DefineConstants Condition="'$(TargetFramework)' == 'net11.0-macos'">$(DefineConstants);MACOS</DefineConstants>
