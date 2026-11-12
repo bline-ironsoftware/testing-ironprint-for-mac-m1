@@ -21,12 +21,13 @@ https://github.com/bline-ironsoftware/testing-ironprint-for-mac-m1
   app does build and run on `net11.0-windows10.0.19041.0`, and listing
   printers and printing the PDF to "Microsoft Print to PDF" worked, but no
   further Windows scenarios were run.
-- **Intel Mac (macOS 15.8.3, no Xcode):** plain console only. All 11
-  scenarios fail with the same `PlatformNotSupportedException` as on Apple
-  Silicon, which is IronPrint's documented limitation for a plain `net11.0`
-  target outside Windows. Native macOS, Mac Catalyst and iOS were not built
-  on Intel.
-- **.NET 10 comparison:** Android, native macOS, Mac Catalyst and iOS (plain IronPrint); see the section after finding 3. No .NET 11 regressions found.
+- **Intel Mac (macOS 15.8.3, no Xcode):** plain console only, on .NET 11
+  and .NET 10 (SDK 10.0.404), licensed. On both, all 11 scenarios fail with
+  the same `PlatformNotSupportedException` as on Apple Silicon, which is
+  IronPrint's documented limitation for a plain target outside Windows.
+  Native macOS, Mac Catalyst and iOS could not be built on Intel because
+  Xcode is not installed there.
+- **.NET 10 comparison:** Android, the console app (Apple Silicon and Intel), native macOS, Mac Catalyst and iOS (both packages); see the section after finding 3. No .NET 11 regressions found.
 - **Not tested anywhere:** a physical iOS device, and a real (non
   "Save as PDF") printer.
 
