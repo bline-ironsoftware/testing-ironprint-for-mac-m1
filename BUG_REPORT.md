@@ -21,6 +21,7 @@ https://github.com/bline-ironsoftware/testing-ironprint-for-mac-m1
   Silicon, which is IronPrint's documented limitation for a plain `net11.0`
   target outside Windows. Native macOS, Mac Catalyst and iOS were not built
   on Intel.
+- **.NET 10 comparison:** Android only, see the section after finding 3.
 - **Not tested anywhere:** a physical iOS device, and a real (non
   "Save as PDF") printer.
 
@@ -171,6 +172,42 @@ the emulator is "Save as PDF", which may not accept a copy count.
 **Impact:** on Android only PDFs passed as `byte[]` reach the print dialog;
 file paths and images do not.
 **Workaround (PDF only):** read the file and pass the bytes.
+
+---
+
+## .NET 10 comparison (Android only)
+
+The same Android scenarios were run against .NET 10 (SDK 10.0.301,
+`net10.0-android`, MAUI 10.0.20, same emulator, same IronPrint.Xamarin
+2026.11.1, licensed) to separate .NET 11 regressions from existing behaviour.
+
+**Result: none of the Android failures in section 3 is a .NET 11
+regression.** The print dialog appears for exactly the same cases on both
+(PDF as `byte[]`: S3 and S10) and for nothing else.
+
+**.NET 10 behaves worse in two ways:**
+
+- Every `PrintAsync` call throws, including the two that open the print
+  dialog:
+  ```
+  System.PlatformNotSupportedException: Operation is not supported on this platform.
+     at System.Runtime.GCSettings.set_LargeObjectHeapCompactionMode(GCLargeObjectHeapCompactionMode value)
+     at IronPrint.Printer.vtivcz()
+     at IronPrint.Printer.PrintAsync(Byte[] fileData, PrintSettings settings)
+  ```
+  This exception replaces the `Resource not found: 0` and `Failed to decode
+  bitmap resource` errors seen on .NET 11, so those underlying errors could
+  not be observed on .NET 10.
+- In a default Debug build, `License.LicenseKey = ...` did not return: a
+  thread stayed at 100% CPU for over two minutes and the app sat on the
+  splash screen. With `-p:UseInterpreter=false` the same call took about
+  3 seconds. The comparison run used that setting, and set the key on a
+  background thread.
+
+**Not compared on .NET 10:** macOS, Mac Catalyst and iOS. The missing
+`maccatalyst` and `iossimulator-arm64` native libraries are a property of
+the package contents, so they should not depend on the .NET version, but
+that was not run.
 
 ---
 

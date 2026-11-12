@@ -82,6 +82,14 @@ Checks IronPrint 2026.11.1 compatibility with .NET 11 RC3 SDK
   decode bitmap resource` (S8, S9, S11; the JPEG is valid and intact in the
   sandbox), and S10 (2 copies, PDF) opens the dialog but shows "Copies: 1",
   which is inconclusive because "Save as PDF" is the only printer.
+- **Android on .NET 10 (comparison run): no .NET 11 regression.** The print
+  dialog appears for the same cases (PDF as `byte[]`) and no others. On
+  .NET 10 every `PrintAsync` call additionally throws
+  `PlatformNotSupportedException` from
+  `GCSettings.set_LargeObjectHeapCompactionMode` inside IronPrint, and in a
+  default Debug build `License.LicenseKey` did not return within two minutes
+  (about 3 seconds with `-p:UseInterpreter=false`). Details in
+  `BUG_REPORT.md`.
 - **`net11.0-macos` also fails to build -- confirmed, different root cause
   than MacCatalyst, also not fixable from this repo.** `clang++` fails
   linking with `Undefined symbols for architecture arm64: "_C_CancelFunction"`,
