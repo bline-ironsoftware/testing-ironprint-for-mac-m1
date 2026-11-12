@@ -90,6 +90,11 @@ Checks IronPrint 2026.11.1 compatibility with .NET 11 RC3 SDK
   default Debug build `License.LicenseKey` did not return within two minutes
   (about 3 seconds with `-p:UseInterpreter=false`). Details in
   `BUG_REPORT.md`.
+- **Mac and iOS on .NET 10 (comparison run): no .NET 11 regression.**
+  Native macOS, Mac Catalyst and the iOS simulator (plain IronPrint) fail
+  with the same link errors on .NET 10 (SDK 10.0.404). With Xcode 27.1 the
+  .NET 10 Catalyst/iOS builds need `-p:MtouchLink=SdkOnly` to get past the
+  Xcode 27.2 requirement (`MT0180`).
 - **`net11.0-macos` also fails to build -- confirmed, different root cause
   than MacCatalyst, also not fixable from this repo.** `clang++` fails
   linking with `Undefined symbols for architecture arm64: "_C_CancelFunction"`,

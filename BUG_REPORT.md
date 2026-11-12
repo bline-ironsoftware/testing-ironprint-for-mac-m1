@@ -26,7 +26,7 @@ https://github.com/bline-ironsoftware/testing-ironprint-for-mac-m1
   Silicon, which is IronPrint's documented limitation for a plain `net11.0`
   target outside Windows. Native macOS, Mac Catalyst and iOS were not built
   on Intel.
-- **.NET 10 comparison:** Android only, see the section after finding 3.
+- **.NET 10 comparison:** Android, native macOS, Mac Catalyst and iOS (plain IronPrint); see the section after finding 3. No .NET 11 regressions found.
 - **Not tested anywhere:** a physical iOS device, and a real (non
   "Save as PDF") printer.
 
@@ -180,7 +180,7 @@ file paths and images do not.
 
 ---
 
-## .NET 10 comparison (Android only)
+## .NET 10 comparison
 
 The same Android scenarios were run against .NET 10 (SDK 10.0.301,
 `net10.0-android`, MAUI 10.0.20, same emulator, same IronPrint.Xamarin
@@ -209,10 +209,21 @@ regression.** The print dialog appears for exactly the same cases on both
   3 seconds. The comparison run used that setting, and set the key on a
   background thread.
 
-**Not compared on .NET 10:** macOS, Mac Catalyst and iOS. The missing
-`maccatalyst` and `iossimulator-arm64` native libraries are a property of
-the package contents, so they should not depend on the .NET version, but
-that was not run.
+**Mac and iOS on .NET 10** (SDK 10.0.404, MAUI 10.0.110, Apple Silicon
+Mac mini, Xcode 27.1): same failures as on .NET 11, so not regressions.
+
+| Target | .NET 10 result |
+|---|---|
+| Native macOS (`net10.0-macos`) | Same `Pkcs11Interop` link error: `Undefined symbols for architecture arm64: "_C_CancelFunction", ...` |
+| Mac Catalyst (`net10.0-maccatalyst`) | Same error: `ld: building for 'macCatalyst', but linking in dylib (...IronPrintInterop.dylib) built for 'iOS'` |
+| iOS simulator, plain IronPrint (`net10.0-ios`) | Same error: `ld: building for 'iOS-simulator', but linking in dylib (...IronPrintInterop.dylib) built for 'iOS'` |
+
+The .NET 10 Mac Catalyst and iOS workloads require Xcode 27.2, so with
+Xcode 27.1 a default build stops earlier with `MT0180: This version of
+Microsoft.iOS requires the iOS 27.2 SDK`. Building with
+`-p:MtouchLink=SdkOnly` gets past that check, and the results above come
+from those builds. That is an environment limitation of the test Mac, not
+an IronPrint issue.
 
 ---
 
