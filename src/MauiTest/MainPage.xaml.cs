@@ -152,5 +152,11 @@ public partial class MainPage : ContentPage
         {
             File.AppendAllText(logFile, entry);
         }
+
+        // Lets scripts/run-mac-tests.sh read the log from `simctl launch --console`.
+        if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("IRONPRINT_AUTORUN")))
+        {
+            Console.WriteLine($"[APPLOG] {entry.TrimEnd()}");
+        }
     }
 }

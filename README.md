@@ -301,6 +301,19 @@ scenario buttons. For an unattended run, set `IRONPRINT_AUTORUN=S1,S2,...`,
 `IRONPRINT_PRINTER` and `IRONPRINT_AUTORUN_LOG` (a log file path) before
 starting the exe.
 
+### Run every Mac test in one go
+
+```bash
+export SUITE_LICENSE_KEY="<your key>"
+git pull && ./scripts/run-mac-tests.sh
+```
+
+Runs the console app, native macOS build, Mac Catalyst build, iOS build
+(plain IronPrint) and an unattended iOS simulator run with IronPrint.Xamarin
+(all 11 scenarios), first on .NET 11 and then on .NET 10 if a .NET 10 SDK is
+installed. Results go to `test-results/<timestamp>/summary.md`, with one log
+per test. Without Xcode only the console app runs.
+
 ### .NET 10 comparison
 
 `scripts/make-net10-copy.sh` creates a sibling copy of the repo with every
