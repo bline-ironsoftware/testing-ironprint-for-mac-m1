@@ -125,7 +125,7 @@ Checks IronPrint 2026.11.1 compatibility with .NET 11 RC3 SDK
   - `IronPrint.Xamarin` (`-p:IosUseXamarin=true`): builds and runs, but NuGet
     resolves it to `lib/netstandard2.0` (not `lib/xamarin.ios10`; confirmed in
     `project.assets.json`) and S2-S7 all throw `NotImplementedException`
-    immediately. That run was unlicensed (`Licensed: False`).
+    immediately. Confirmed with a licensed run (`Licensed: True`).
   - Plain `IronPrint`, `iossimulator-arm64` (the default on Apple Silicon):
     link fails, `ld: building for 'iOS-simulator', but linking in dylib
     (...IronPrintInterop.dylib) built for 'iOS'`. The package has no
@@ -332,7 +332,7 @@ checked the physical output of S2-S7:
 | Native macOS console (net11.0-macos) | FAIL (confirmed -- Pkcs11Interop native link error, see Known Constraints) | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
 | Mac Catalyst | FAIL (confirmed -- missing native asset, see Known Constraints) | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
 | iOS simulator, plain IronPrint | FAIL (confirmed -- no `iossimulator-arm64` native asset; `iossimulator-x64` hits the Pkcs11Interop link error) | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
-| iOS simulator, IronPrint.Xamarin (unlicensed run) | OK | FAIL (expected -- API absent) | FAIL (NotImplementedException) | FAIL (same) | FAIL (same) | FAIL (same) | FAIL (same) | FAIL (same) |
+| iOS simulator, IronPrint.Xamarin (licensed) | OK | FAIL (expected -- API absent) | FAIL (NotImplementedException) | FAIL (same) | FAIL (same) | FAIL (same) | FAIL (same) | FAIL (same) |
 | Android emulator (IronPrint.Xamarin, licensed) | OK | FAIL (expected -- API absent) | FAIL (Resource not found: 0) | SENT (print dialog opens, preview correct) | FAIL (Resource not found: 0) | FAIL (same) | FAIL (same) | FAIL (same) |
 | Android emulator (plain IronPrint, licensed) | OK | same as IronPrint.Xamarin | same | same | same | same | same | same |
 

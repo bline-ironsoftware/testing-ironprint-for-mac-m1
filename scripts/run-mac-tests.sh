@@ -6,6 +6,10 @@
 #   export SUITE_LICENSE_KEY="<your key>"
 #   git pull && ./scripts/run-mac-tests.sh
 #
+# Optional filters:
+#   SUITES=net10   run only the .NET 10 half (or SUITES=net11)
+#   ONLY=ios       run only the iOS IronPrint.Xamarin build and simulator run
+#
 # Needs: the .NET 11 RC3 SDK (see global.json) and, for the comparison, any
 # .NET 10 SDK, each with the maui and macos workloads. Xcode is needed for the
 # native macOS, Mac Catalyst and iOS tests; without it only the console runs.
@@ -114,14 +118,16 @@ run_suite() {
   say ""
   say "| Test | Result | Detail |"
   say "|---|---|---|"
-  console_test "$label" "$root" "$n"
+  [ "${ONLY:-}" = ios ] || console_test "$label" "$root" "$n"
   if [ "$HAS_XCODE" != yes ]; then
     row "$label Apple targets" "SKIPPED" "no Xcode on this Mac"
     return
   fi
-  build_test "$label" "native-macos-build" "$root" src/MacOSConsoleTest
-  build_test "$label" "maccatalyst-build" "$root" src/MauiTest -f "$n-maccatalyst" "$@"
-  build_test "$label" "ios-plain-build" "$root" src/MauiTest -f "$n-ios" "$@"
+  if [ "${ONLY:-}" != ios ]; then
+    build_test "$label" "native-macos-build" "$root" src/MacOSConsoleTest
+    build_test "$label" "maccatalyst-build" "$root" src/MauiTest -f "$n-maccatalyst" "$@"
+    build_test "$label" "ios-plain-build" "$root" src/MauiTest -f "$n-ios" "$@"
+  fi
   ios_run_test "$label" "$root" "$n-ios" ios-xamarin "$@"
   # On .NET 10 the licence-key call hangs with the Mono interpreter (seen on Android);
   # a second pass with the interpreter off shows whether the scenarios then run.
@@ -139,9 +145,13 @@ say "- Repo commit: $(git -C "$REPO" rev-parse --short HEAD)"
 say "- SDKs: $(dotnet --list-sdks 2>/dev/null | cut -d' ' -f1 | tr '\n' ' ')"
 echo "Writing results to $OUT (this takes 15 to 30 minutes)"
 
-run_suite "net11" "$REPO" "net11.0"
+want() { [ -z "${SUITES:-}" ] || [ "$SUITES" = "$1" ]; }
 
-if dotnet --list-sdks 2>/dev/null | grep -q "^10\.0\."; then
+want net11 && run_suite "net11" "$REPO" "net11.0"
+
+if ! want net10; then
+  :
+elif dotnet --list-sdks 2>/dev/null | grep -q "^10\.0\."; then
   N10="$REPO/.net10"
   rm -rf "$N10"
   "$REPO/scripts/make-net10-copy.sh" "$N10" > "$OUT/net10-setup.log" 2>&1

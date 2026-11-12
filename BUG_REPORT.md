@@ -262,7 +262,7 @@ Every `PrintAsync` scenario (PDF path, PDF bytes, JPG path, grayscale,
 ```
 NotImplementedException: The method or operation is not implemented.
 ```
-This run was unlicensed (`Licensed: False`); a licensed re-run was not done.
+Confirmed with a licensed run (`Licensed: True`, 2026-11-12): identical result for all 11 scenarios.
 
 **Not tested:** a physical iOS device (`ios-arm64`), and any x64 simulator
 run (4b never links; the test Mac only has arm64 simulator devices).
