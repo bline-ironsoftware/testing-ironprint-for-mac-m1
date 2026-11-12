@@ -16,13 +16,11 @@ https://github.com/bline-ironsoftware/testing-ironprint-for-mac-m1
   macOS, Mac Catalyst and iOS simulator (plain IronPrint and
   IronPrint.Xamarin).
 - **Windows PC:** Android 15 emulator (IronPrint.Xamarin and plain
-  IronPrint, licensed), and MAUI on Windows (partial, see below).
-- **MAUI on Windows (`net11.0-windows10.0.19041.0`, unpackaged, plain
-  IronPrint, licensed):** builds and runs. `GetPrinterNamesAsync` returns
-  the 11 installed printers. `PrintAsync` with a PDF path (S2) and with PDF
-  bytes (S3) each produced a valid 2-page PDF through "Microsoft Print to
-  PDF". S4 to S11 (JPG, grayscale, copies, landscape) have not been run on
-  this target yet.
+  IronPrint, licensed).
+- **Windows itself is out of scope** (covered separately). The MAUI test
+  app does build and run on `net11.0-windows10.0.19041.0`, and listing
+  printers and printing the PDF to "Microsoft Print to PDF" worked, but no
+  further Windows scenarios were run.
 - **Intel Mac (macOS 15.8.3, no Xcode):** plain console only. All 11
   scenarios fail with the same `PlatformNotSupportedException` as on Apple
   Silicon, which is IronPrint's documented limitation for a plain `net11.0`
