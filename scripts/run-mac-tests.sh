@@ -31,8 +31,13 @@ row()  { echo "| $1 | $2 | $3 |" >> "$SUMMARY"; printf '  %-40s %s\n' "$1" "$2";
 cell() { tr '\n' ' ' | sed 's/|/\\|/g; s/[[:space:]]\{1,\}/ /g' | cut -c1-260; }
 
 first_error() {
-  grep -m1 -E "ld: building for|Undefined symbols for|error MT[0-9]+|error NETSDK[0-9]+|error CS[0-9]+|error NU[0-9]+|error IL[0-9]+|A compatible .NET SDK was not found|error :" "$1" \
-    | sed 's/^[[:space:]]*//' | cell
+  local hit
+  hit=$(grep -m1 -E "ld: building for|Undefined symbols for|error MT[0-9]+|error NETSDK[0-9]+|error CS[0-9]+|error NU[0-9]+|error IL[0-9]+|A compatible .NET SDK was not found" "$1")
+  if echo "$hit" | grep -q "Undefined symbols"; then
+    hit="$hit $(grep -m1 -A1 "Undefined symbols for" "$1" | tail -1)"
+  fi
+  [ -z "$hit" ] && hit=$(grep -m1 -E "error :|: error" "$1")
+  echo "$hit" | sed 's/^[[:space:]]*//' | cell
 }
 
 clean() {
@@ -138,6 +143,11 @@ else
   say "## net10"
   say ""
   say "Skipped: no .NET 10 SDK installed."
+fi
+
+if grep -q "Licensed: False" "$SUMMARY"; then
+  say ""
+  say "WARNING: at least one run was not licensed. Check that SUITE_LICENSE_KEY holds the real key."
 fi
 
 echo
