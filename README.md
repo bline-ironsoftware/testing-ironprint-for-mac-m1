@@ -288,8 +288,7 @@ add `-p:AndroidUseXamarin=false`.
 ```bash
 cd src/MauiTest
 dotnet build -f net11.0-windows10.0.19041.0 -p:TargetFrameworks=net11.0-windows10.0.19041.0
-bin\Debug
-et11.0-windows10.0.19041.0\win-x64\MauiTest.exe
+bin/Debug/net11.0-windows10.0.19041.0/win-x64/MauiTest.exe
 ```
 
 Type a printer name (for example `Microsoft Print to PDF`) and click the
