@@ -210,7 +210,9 @@ regression.** The print dialog appears for exactly the same cases on both
   background thread.
 
 **Mac and iOS on .NET 10** (SDK 10.0.404, MAUI 10.0.110, Apple Silicon
-Mac mini, Xcode 27.1): same failures as on .NET 11, so not regressions.
+Mac mini, Xcode 27.1): nothing that fails on .NET 11 works on .NET 10, so
+none of these is a .NET 11 regression. The licence-key hang only happens on
+.NET 10.
 
 | Target | .NET 10 result |
 |---|---|
@@ -218,6 +220,7 @@ Mac mini, Xcode 27.1): same failures as on .NET 11, so not regressions.
 | Native macOS (`net10.0-macos`) | Same `Pkcs11Interop` link error: `Undefined symbols for architecture arm64: "_C_CancelFunction", ...` |
 | Mac Catalyst (`net10.0-maccatalyst`) | Same error: `ld: building for 'macCatalyst', but linking in dylib (...IronPrintInterop.dylib) built for 'iOS'` |
 | iOS simulator, plain IronPrint (`net10.0-ios`) | Same error: `ld: building for 'iOS-simulator', but linking in dylib (...IronPrintInterop.dylib) built for 'iOS'` |
+| iOS simulator, IronPrint.Xamarin (`net10.0-ios`, licensed) | Builds. In a default Debug build the app freezes while setting `License.LicenseKey` (same as Android on .NET 10). With `-p:UseInterpreter=false` the key is set in 0.2 s, then every print scenario fails with `PlatformNotSupportedException: Operation is not supported on this platform` (the same message as Android on .NET 10; the iOS stack trace was not inspected). On .NET 11 the same scenarios fail with `NotImplementedException` instead |
 
 The .NET 10 Mac Catalyst and iOS workloads require Xcode 27.2, so with
 Xcode 27.1 a default build stops earlier with `MT0180: This version of

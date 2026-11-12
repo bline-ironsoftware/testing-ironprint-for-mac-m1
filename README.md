@@ -95,6 +95,10 @@ Checks IronPrint 2026.11.1 compatibility with .NET 11 RC3 SDK
   with the same link errors on .NET 10 (SDK 10.0.404). With Xcode 27.1 the
   .NET 10 Catalyst/iOS builds need `-p:MtouchLink=SdkOnly` to get past the
   Xcode 27.2 requirement (`MT0180`).
+  iOS with IronPrint.Xamarin on .NET 10 freezes while setting the licence
+  key in a default Debug build; with `-p:UseInterpreter=false` it runs and
+  every print call fails with `PlatformNotSupportedException` (on .NET 11:
+  `NotImplementedException`).
 - **`net11.0-macos` also fails to build -- confirmed, different root cause
   than MacCatalyst, also not fixable from this repo.** `clang++` fails
   linking with `Undefined symbols for architecture arm64: "_C_CancelFunction"`,
