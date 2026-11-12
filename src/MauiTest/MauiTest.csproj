@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>net11.0-maccatalyst;net11.0-ios;net11.0-android</TargetFrameworks>
+    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net11.0-windows10.0.19041.0</TargetFrameworks>
     <OutputType>Exe</OutputType>
     <RootNamespace>MauiTest</RootNamespace>
     <UseMaui>true</UseMaui>
@@ -18,6 +19,9 @@
     <SupportedOSPlatformVersion Condition="'$(TargetFramework)' == 'net11.0-maccatalyst'">17.0</SupportedOSPlatformVersion>
     <SupportedOSPlatformVersion Condition="'$(TargetFramework)' == 'net11.0-android'">24.0</SupportedOSPlatformVersion>
     <TargetPlatformMinVersion Condition="'$(TargetFramework)' == 'net11.0-android'">24.0</TargetPlatformMinVersion>
+    <SupportedOSPlatformVersion Condition="$(TargetFramework.Contains('-windows'))">10.0.17763.0</SupportedOSPlatformVersion>
+    <TargetPlatformMinVersion Condition="$(TargetFramework.Contains('-windows'))">10.0.17763.0</TargetPlatformMinVersion>
+    <WindowsPackageType Condition="$(TargetFramework.Contains('-windows'))">None</WindowsPackageType>
 
     <CodesignEntitlements Condition="'$(TargetFramework)' == 'net11.0-maccatalyst'">Platforms\MacCatalyst\Entitlements.plist</CodesignEntitlements>
 
@@ -52,7 +56,7 @@
        the SAME env var on whichever machine runs `dotnet build`/`dotnet run`. The generated
        file lives under $(IntermediateOutputPath) (obj/, already gitignored) and the key is
        never written anywhere under src/ or committed to git. -->
-  <Target Name="GenerateBuildTimeLicenseKey" BeforeTargets="CoreCompile">
+  <Target Name="GenerateBuildTimeLicenseKey" BeforeTargets="XamlPreCompile;CoreCompile">
     <PropertyGroup>
       <GeneratedLicenseKeyFile>$(IntermediateOutputPath)GeneratedLicenseKey.g.cs</GeneratedLicenseKeyFile>
     </PropertyGroup>

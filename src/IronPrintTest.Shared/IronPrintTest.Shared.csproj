@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>net11.0;net11.0-macos;net11.0-maccatalyst;net11.0-ios;net11.0-android</TargetFrameworks>
+    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net11.0-windows10.0.19041.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <!-- net11.0-macos is a plain console target (Xamarin.Mac-style, not MAUI); MAUI does not
@@ -28,12 +29,15 @@
        reproduce the IronPrint.Xamarin result. -->
   <PropertyGroup>
     <IosUseXamarin Condition="'$(IosUseXamarin)' == ''">false</IosUseXamarin>
+    <!-- Android defaults to IronPrint.Xamarin; -p:AndroidUseXamarin=false tests plain IronPrint. -->
+    <AndroidUseXamarin Condition="'$(AndroidUseXamarin)' == ''">true</AndroidUseXamarin>
+    <UseXamarinPackage>false</UseXamarinPackage>
+    <UseXamarinPackage Condition="'$(TargetFramework)' == 'net11.0-ios' and '$(IosUseXamarin)' == 'true'">true</UseXamarinPackage>
+    <UseXamarinPackage Condition="'$(TargetFramework)' == 'net11.0-android' and '$(AndroidUseXamarin)' == 'true'">true</UseXamarinPackage>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="IronPrint" Version="$(IronPrintTestVersion)"
-                       Condition="'$(TargetFramework)' == 'net11.0' or '$(TargetFramework)' == 'net11.0-macos' or '$(TargetFramework)' == 'net11.0-maccatalyst' or ('$(TargetFramework)' == 'net11.0-ios' and '$(IosUseXamarin)' != 'true')" />
-    <PackageReference Include="IronPrint.Xamarin" Version="$(IronPrintXamarinTestVersion)"
-                       Condition="'$(TargetFramework)' == 'net11.0-android' or ('$(TargetFramework)' == 'net11.0-ios' and '$(IosUseXamarin)' == 'true')" />
+    <PackageReference Include="IronPrint" Version="$(IronPrintTestVersion)" Condition="'$(UseXamarinPackage)' != 'true'" />
+    <PackageReference Include="IronPrint.Xamarin" Version="$(IronPrintXamarinTestVersion)" Condition="'$(UseXamarinPackage)' == 'true'" />
   </ItemGroup>
 
 </Project>

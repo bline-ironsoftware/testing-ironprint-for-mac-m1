@@ -280,6 +280,23 @@ dotnet build -t:Install -f net11.0-android -p:TargetFrameworks=net11.0-android "
 
 Failed scenarios write their full stack trace to logcat (tag `DOTNET`).
 
+To test the plain `IronPrint` package on Android instead of `IronPrint.Xamarin`,
+add `-p:AndroidUseXamarin=false`.
+
+### MAUI on Windows
+
+```bash
+cd src/MauiTest
+dotnet build -f net11.0-windows10.0.19041.0 -p:TargetFrameworks=net11.0-windows10.0.19041.0
+bin\Debug
+et11.0-windows10.0.19041.0\win-x64\MauiTest.exe
+```
+
+Type a printer name (for example `Microsoft Print to PDF`) and click the
+scenario buttons. For an unattended run, set `IRONPRINT_AUTORUN=S1,S2,...`,
+`IRONPRINT_PRINTER` and `IRONPRINT_AUTORUN_LOG` (a log file path) before
+starting the exe.
+
 ## Report
 
 Fill this in (or paste `results.md`'s table) once you've run both apps and
@@ -294,5 +311,7 @@ checked the physical output of S2-S7:
 | iOS simulator, plain IronPrint | FAIL (confirmed -- no `iossimulator-arm64` native asset; `iossimulator-x64` hits the Pkcs11Interop link error) | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
 | iOS simulator, IronPrint.Xamarin (unlicensed run) | OK | FAIL (expected -- API absent) | FAIL (NotImplementedException) | FAIL (same) | FAIL (same) | FAIL (same) | FAIL (same) | FAIL (same) |
 | Android emulator (IronPrint.Xamarin, licensed) | OK | FAIL (expected -- API absent) | FAIL (Resource not found: 0) | SENT (print dialog opens, preview correct) | FAIL (Resource not found: 0) | FAIL (same) | FAIL (same) | FAIL (same) |
+| Android emulator (plain IronPrint, licensed) | OK | same as IronPrint.Xamarin | same | same | same | same | same | same |
+| MAUI on Windows (plain IronPrint, licensed, Microsoft Print to PDF) | OK | PASS (11 printers) | SENT (valid 2-page PDF) | SENT (valid 2-page PDF) | not run | not run | not run | not run |
 
 Android `byte[]` scenarios (not in the table): S8 JPG, S9 grayscale JPG, S11 landscape JPG all FAIL (`Failed to decode bitmap resource`); S10 2 copies PDF opens the print dialog with "Copies: 1" (inconclusive).

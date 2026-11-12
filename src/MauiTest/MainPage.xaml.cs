@@ -39,7 +39,9 @@ public partial class MainPage : ContentPage
             PlatformLabel.Text =
                 $"IronPrint {typeof(Printer).Assembly.GetName().Version} on {DeviceInfo.Platform} " +
                 $"{DeviceInfo.VersionString} ({DeviceInfo.Idiom}) -- Licensed: {License.IsLicensed}";
+            AppendLog(PlatformLabel.Text);
             AppendLog("Ready. Test files copied into the app sandbox. Tap a scenario below.");
+            await AutoRunAsync();
         }
         catch (Exception ex)
         {
@@ -69,6 +71,41 @@ public partial class MainPage : ContentPage
             return;
         }
 
+        button.IsEnabled = false;
+        try
+        {
+            await RunScenarioAsync(scenarioId);
+        }
+        finally
+        {
+            button.IsEnabled = true;
+        }
+    }
+
+    /// <summary>
+    /// Desktop-only convenience: IRONPRINT_AUTORUN="S1,S3" runs those scenarios at startup,
+    /// IRONPRINT_PRINTER fills the printer name, IRONPRINT_AUTORUN_LOG mirrors the log to a file.
+    /// Mobile processes never see these variables, so this is a no-op there.
+    /// </summary>
+    private async Task AutoRunAsync()
+    {
+        var ids = Environment.GetEnvironmentVariable("IRONPRINT_AUTORUN");
+        if (string.IsNullOrWhiteSpace(ids))
+        {
+            return;
+        }
+
+        PrinterNameEntry.Text = Environment.GetEnvironmentVariable("IRONPRINT_PRINTER");
+        foreach (var id in ids.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            await RunScenarioAsync(id);
+        }
+
+        AppendLog("Auto-run finished.");
+    }
+
+    private async Task RunScenarioAsync(string scenarioId)
+    {
         if (_context is null)
         {
             AppendLog("Not ready yet -- setup is still running or failed above.");
@@ -79,7 +116,6 @@ public partial class MainPage : ContentPage
         var printerName = string.IsNullOrWhiteSpace(PrinterNameEntry.Text) ? null : PrinterNameEntry.Text;
         var context = _context with { PrinterName = printerName };
 
-        button.IsEnabled = false;
         AppendLog($"Running {scenario.Id}: {scenario.Name}...");
         try
         {
@@ -93,6 +129,10 @@ public partial class MainPage : ContentPage
             {
                 line += $" -> {result.ExpectedOnPaper}";
             }
+            else if (!string.IsNullOrEmpty(result.Message))
+            {
+                line += $" -> {result.Message}";
+            }
 
             AppendLog(line);
         }
@@ -100,14 +140,17 @@ public partial class MainPage : ContentPage
         {
             AppendLog($"[FAIL] {scenario.Id}: {scenario.Name} -> unhandled {ex.GetType().Name}: {ex.Message}");
         }
-        finally
-        {
-            button.IsEnabled = true;
-        }
     }
 
     private void AppendLog(string line)
     {
-        LogEditor.Text += $"{DateTime.Now:HH:mm:ss} {line}{Environment.NewLine}";
+        var entry = $"{DateTime.Now:HH:mm:ss} {line}{Environment.NewLine}";
+        LogEditor.Text += entry;
+
+        var logFile = Environment.GetEnvironmentVariable("IRONPRINT_AUTORUN_LOG");
+        if (!string.IsNullOrEmpty(logFile))
+        {
+            File.AppendAllText(logFile, entry);
+        }
     }
 }

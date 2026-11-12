@@ -15,7 +15,14 @@ https://github.com/bline-ironsoftware/testing-ironprint-for-mac-m1
 - **Apple Silicon Mac mini (macOS, Xcode 27.1):** plain console, native
   macOS, Mac Catalyst and iOS simulator (plain IronPrint and
   IronPrint.Xamarin).
-- **Windows PC:** Android 15 emulator (IronPrint.Xamarin, licensed).
+- **Windows PC:** Android 15 emulator (IronPrint.Xamarin and plain
+  IronPrint, licensed), and MAUI on Windows (partial, see below).
+- **MAUI on Windows (`net11.0-windows10.0.19041.0`, unpackaged, plain
+  IronPrint, licensed):** builds and runs. `GetPrinterNamesAsync` returns
+  the 11 installed printers. `PrintAsync` with a PDF path (S2) and with PDF
+  bytes (S3) each produced a valid 2-page PDF through "Microsoft Print to
+  PDF". S4 to S11 (JPG, grayscale, copies, landscape) have not been run on
+  this target yet.
 - **Intel Mac (macOS 15.8.3, no Xcode):** plain console only. All 11
   scenarios fail with the same `PlatformNotSupportedException` as on Apple
   Silicon, which is IronPrint's documented limitation for a plain `net11.0`
@@ -117,7 +124,7 @@ Apple's app-bundle model.
 
 ## 3. IronSoftware -- Android: only PDF-as-`byte[]` prints; file paths fail with `Resource not found: 0`, JPG bytes fail to decode
 
-**Package:** IronPrint.Xamarin 2026.11.1 (plain IronPrint 2026.11.1 gave the same error in an earlier run)
+**Package:** IronPrint.Xamarin 2026.11.1 and plain IronPrint 2026.11.1 (`-p:AndroidUseXamarin=false`). Both were run through all 11 scenarios, licensed, with identical results
 **Target:** `net11.0-android`, Android 15 (API 35) emulator, licensed (`Licensed: True`)
 **Environment:** .NET 11 RC3 SDK, Android SDK platform 37 (Microsoft.Android.Sdk.Windows 37.0.0-preview.6.59)
 
