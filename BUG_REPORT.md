@@ -214,6 +214,7 @@ Mac mini, Xcode 27.1): same failures as on .NET 11, so not regressions.
 
 | Target | .NET 10 result |
 |---|---|
+| Console app (`net10.0`, .NET 10.0.15 runtime, licensed) | Same as .NET 11: all 11 scenarios fail with `PlatformNotSupportedException` ("To use Print/PrintAsync outside windows you need to set a more specific OS TargetFramework") |
 | Native macOS (`net10.0-macos`) | Same `Pkcs11Interop` link error: `Undefined symbols for architecture arm64: "_C_CancelFunction", ...` |
 | Mac Catalyst (`net10.0-maccatalyst`) | Same error: `ld: building for 'macCatalyst', but linking in dylib (...IronPrintInterop.dylib) built for 'iOS'` |
 | iOS simulator, plain IronPrint (`net10.0-ios`) | Same error: `ld: building for 'iOS-simulator', but linking in dylib (...IronPrintInterop.dylib) built for 'iOS'` |
